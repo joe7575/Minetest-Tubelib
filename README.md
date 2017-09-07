@@ -1,9 +1,10 @@
 # Tube Library
 
+Lumber tubes and a simple communication API for Minetest
 
-Browse on: ![GitHub](https://github.com/joe7575/Minetest-Gravelsieve)
+Browse on: ![GitHub](https://github.com/joe7575/Minetest-Tubelib)
 
-Download: ![GitHub](https://github.com/joe7575/Minetest-Gravelsieve/archive/master.zip)
+Download: ![GitHub](https://github.com/joe7575/Minetest-Tubelib/archive/master.zip)
 
 
 ## Dependencies

@@ -1,1 +1,2 @@
-This lib includes tubes with a simple API for automation mods.
+Lumber tubes and a simple communication API for Minetest.
+
