@@ -8,7 +8,7 @@ Download: ![GitHub](https://github.com/joe7575/Minetest-Tubelib/archive/master.z
 
 
 ## Dependencies
-none  
+default  
 
 # License
 Copyright (C) 2017 Joachim Stolberg  
