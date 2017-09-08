@@ -102,7 +102,6 @@ end
 
 function tubelib.pull_items(pos, facedir, side)
 	local node, src_pos = tubelib.get_pos(pos, facedir, side)
-	local key = tubelib.get_key_str(src_pos)
 	if tubelib.NodeTypes[node.name] and tubelib.NodeTypes[node.name].pull_clbk then
 		return tubelib.NodeTypes[node.name].pull_clbk(src_pos)
 	elseif legacy_node(node) then
@@ -115,7 +114,6 @@ end
 
 function tubelib.push_items(pos, facedir, side, items)
 	local node, dst_pos = tubelib.get_pos(pos, facedir, side)
-	local key = tubelib.get_key_str(dst_pos)
 	if tubelib.NodeTypes[node.name] and tubelib.NodeTypes[node.name].push_clbk then
 		return tubelib.NodeTypes[node.name].push_clbk(dst_pos, items)
 	elseif legacy_node(node) then

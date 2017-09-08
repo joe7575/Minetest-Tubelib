@@ -84,7 +84,6 @@ local function get_next_side(meta, item_name, filter)
 		if running[idx] == true then
 			for _,name in ipairs(filter[idx]) do
 				if name == item_name then
-					print(meta:get_string("running"), idx, num2asc[idx])
 					return num2asc[idx]
 				end
 			end
@@ -94,7 +93,6 @@ local function get_next_side(meta, item_name, filter)
 		idx = ((i + side) % 4) + 1
 		if running[idx] == true then
 			if #filter[idx] == 0 then
-				print(meta:get_string("running"), idx, num2asc[idx])
 				return num2asc[idx]
 			end
 		end
@@ -144,7 +142,6 @@ local function keep_running(pos, elapsed)
 	local facedir = meta:get_int("facedir")
 	if item then
 		local side = get_next_side(meta, item:get_name(), filter)
-		print(side)
 		if side then
 			if tubelib.push_items(pos, facedir, side, item) then
 				return true
@@ -158,7 +155,6 @@ end
 
 local function on_receive_fields(pos, formname, fields, player)
 	local meta = minetest.get_meta(pos)
-	print(meta:get_string("running"))
 	local running = minetest.deserialize(meta:get_string("running"))
 	if fields.running1 ~= nil then
 		running[1] = fields.running1 == "true"
