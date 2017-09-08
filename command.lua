@@ -76,16 +76,19 @@ end
 -- Send function
 -------------------------------------------------------------------
 
--- Send a command to the 'dest_num' with topic string (e.g. "start") and
+-- Send a command to all blocks referenced by 'destinations', a list of one or more numbers
+-- separated by blanks. The command includes the topic string (e.g. "start") and
 -- topic related payload.
 -- The player_name is needed to check the protection rights. If player is unknown
 -- use nil instead.
-function tubelib.send_cmnd(dest_num, player_name, topic, payload)
-	if Number2Pos[dest_num] then
-		local data = Number2Pos[dest_num]
-		if player_name == nil or not minetest.is_protected(data.pos, player_name) then
-			if tubelib.ReceiveFunction[data.name] then
-				return tubelib.ReceiveFunction[data.name](data.pos, topic, payload)
+function tubelib.send_cmnd(destinations, player_name, topic, payload)
+	for _,num in ipairs(string.split(destinations, " ")) do
+		if Number2Pos[num] then
+			local data = Number2Pos[num]
+			if player_name == nil or not minetest.is_protected(data.pos, player_name) then
+				if tubelib.ReceiveFunction[data.name] then
+					return tubelib.ReceiveFunction[data.name](data.pos, topic, payload)
+				end
 			end
 		end
 	end

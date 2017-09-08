@@ -9,13 +9,13 @@
 	See LICENSE.txt for more information
 
 	History:
-	see init.lua
+	2017-09-08  v0.01  first version
 
 ]]--
 
 tubelib = {
 	NodeTypes = {},
-	}
+}
 
 tubelib.debug = true
 
@@ -35,38 +35,10 @@ tubelib.legacyNodes = {
 	["default:chest"] = true,
 }
 
-dofile(minetest.get_modpath("tubelib") .. "/tubes.lua")
-dofile(minetest.get_modpath("tubelib") .. "/command.lua")
-dofile(minetest.get_modpath("tubelib") .. "/button.lua")
-dofile(minetest.get_modpath("tubelib") .. "/lamp.lua")
-
 function tubelib.get_key_str(pos)
 	pos = minetest.pos_to_string(pos)
 	return '"'..string.sub(pos, 2, -2)..'"'
 end
-
--- determine neighbor position based on current pos, node facedir
--- and the side F(orward), R(ight), B(ackward), L(eft), D(own), U(p)
-function tubelib.get_pos(pos, facedir, side)
-	local offs = {F=0, R=1, B=2, L=3, D=4, U=5}
-	local _pos = table.copy(pos)
-	facedir = (facedir + offs[side]) % 4
-	local dir = core.facedir_to_dir(facedir)
-	return vector.add(_pos, dir)
-end	
-
--- determine position like "tubelib.get_pos", but
--- consider tubes in addition
-function tubelib.get_pos_ext(pos, facedir, side)
-	local dst_pos = tubelib.get_pos(pos, facedir, side)
-	local node = minetest.get_node(dst_pos)
-	if node and string.find(node.name, "tubelib:tube") then
-		dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos"))
-		node = minetest.get_node(dst_pos)
-	end
-	return node, dst_pos
-end	
-
 
 -- 6D variant of the facedir to dir conversion 
 function tubelib.facedir_to_dir(facedir)
@@ -80,6 +52,24 @@ function tubelib.facedir_to_dir(facedir)
 	}
 	return table[facedir]
 end
+
+-- Determine neighbor position based on current pos, node facedir
+-- and the side F(orward), R(ight), B(ackward), L(eft), D(own), U(p).
+-- The function considers tubes in addition.
+function tubelib.get_pos(pos, facedir, side)
+	local offs = {F=0, R=1, B=2, L=3, D=4, U=5}
+	local dst_pos = table.copy(pos)
+	facedir = (facedir + offs[side]) % 4
+	local dir = tubelib.facedir_to_dir(facedir)
+	dst_pos = vector.add(dst_pos, dir)
+	local node = minetest.get_node(dst_pos)
+	if node and string.find(node.name, "tubelib:tube") then
+		dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos"))
+		node = minetest.get_node(dst_pos)
+	end
+	return node, dst_pos
+end	
+
 
 local function get_facedir(placer)
 	if placer then
@@ -109,35 +99,31 @@ end
 -- Client side API functions
 -------------------------------------------------------------------
 
-function tubelib.pull_items(pos, facedir, sides)
-	for _,side in ipairs(sides) do
-		local node, src_pos = tubelib.get_pos_ext(pos, facedir, side)
-		local key = tubelib.get_key_str(src_pos)
-		if tubelib.NodeTypes[node.name] and tubelib.NodeTypes[node.name].start_clbk then
-			return tubelib.NodeTypes[node.name].pull_clbk(src_pos)
-		elseif legacy_node(node) then
-			local meta = minetest.get_meta(src_pos)
-			local inv = meta:get_inventory()
-			return tubelib.get_item(inv, "main")
-		end
+function tubelib.pull_items(pos, facedir, side)
+	local node, src_pos = tubelib.get_pos(pos, facedir, side)
+	local key = tubelib.get_key_str(src_pos)
+	if tubelib.NodeTypes[node.name] and tubelib.NodeTypes[node.name].pull_clbk then
+		return tubelib.NodeTypes[node.name].pull_clbk(src_pos)
+	elseif legacy_node(node) then
+		local meta = minetest.get_meta(src_pos)
+		local inv = meta:get_inventory()
+		return tubelib.get_item(inv, "main")
 	end
 	return nil
 end
 
-function tubelib.push_items(pos, facedir, sides, items)
-	for _,side in ipairs(sides) do
-		local node, dst_pos = tubelib.get_pos_ext(pos, facedir, side)
-		local key = tubelib.get_key_str(dst_pos)
-		if tubelib.NodeTypes[node.name] and tubelib.NodeTypes[node.name].start_clbk then
-			return tubelib.NodeTypes[node.name].push_clbk(dst_pos, items)
-		elseif legacy_node(node) then
-			local meta = minetest.get_meta(dst_pos)
-			local inv = meta:get_inventory()
-			return tubelib.put_item(inv, "main", items)
-		elseif node and node.name == "air" then
-			minetest.add_item(dst_pos, items)
-			return true 
-		end
+function tubelib.push_items(pos, facedir, side, items)
+	local node, dst_pos = tubelib.get_pos(pos, facedir, side)
+	local key = tubelib.get_key_str(dst_pos)
+	if tubelib.NodeTypes[node.name] and tubelib.NodeTypes[node.name].push_clbk then
+		return tubelib.NodeTypes[node.name].push_clbk(dst_pos, items)
+	elseif legacy_node(node) then
+		local meta = minetest.get_meta(dst_pos)
+		local inv = meta:get_inventory()
+		return tubelib.put_item(inv, "main", items)
+	elseif node and node.name == "air" then
+		minetest.add_item(dst_pos, items)
+		return true 
 	end
 	return false
 end
@@ -174,4 +160,11 @@ function tubelib.put_item(inv, listname, items)
 		return true
 	end
 	return false
-end	
+end
+
+dofile(minetest.get_modpath("tubelib") .. "/tubes.lua")
+dofile(minetest.get_modpath("tubelib") .. "/command.lua")
+dofile(minetest.get_modpath("tubelib") .. "/button.lua")
+dofile(minetest.get_modpath("tubelib") .. "/lamp.lua")
+dofile(minetest.get_modpath("tubelib") .. "/pusher.lua")
+

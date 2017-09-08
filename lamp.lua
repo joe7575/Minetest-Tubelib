@@ -45,7 +45,7 @@ minetest.register_node("tubelib:lamp", {
 	after_place_node = function(pos, placer)
 		local number = tubelib.add_server_node(pos, "tubelib:lamp", placer)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext", number)
+		meta:set_string("infotext", "Tubelib Lamp "..number)
 	end,
 
 	on_rightclick = function(pos, node, clicker)
@@ -76,8 +76,6 @@ minetest.register_node("tubelib:lamp_on", {
 	light_source = 8,	
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
-	drop = "tubelib:lamp",
 })
 
 tubelib.register_receive_function("tubelib:lamp", command_reception)
-tubelib.register_receive_function("tubelib:lamp_on", command_reception)	

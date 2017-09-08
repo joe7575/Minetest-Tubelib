@@ -75,6 +75,7 @@ minetest.register_node("tubelib:button", {
 			local meta = minetest.get_meta(pos)
 			meta:set_string("number", fields.number)
 			meta:set_string("formspec", nil)
+			meta:set_string("infotext", "Tubelib Button, connected with block "..fields.number)
 		end
 	end,
 	
@@ -105,5 +106,4 @@ minetest.register_node("tubelib:button_active", {
 	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
-	drop = "tubelib:button",
 })
