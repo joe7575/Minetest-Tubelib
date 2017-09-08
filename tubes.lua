@@ -124,23 +124,26 @@ local function walk_to_peer(pos, pos1)
 		cnt = cnt + 1
 		node = minetest.get_node(pos1)
 	end
-	return pos, pos1
+	return cnt, pos, pos1
 end	
 
 local function update_head_tubes(pos)
 	local node = minetest.get_node(pos)
 	if string.find(node.name, "tubelib:tube") then
 		local pos1, pos2 = nodetype_to_pos(nil, pos, node)
-		local peer1, dest1 = walk_to_peer(pos, pos1)
-		local peer2, dest2 = walk_to_peer(pos, pos2)
+		local cnt1, peer1, dest1 = walk_to_peer(pos, pos1)
+		local cnt2, peer2, dest2 = walk_to_peer(pos, pos2)
+		print(cnt1, cnt2)
 		minetest.get_meta(peer1):set_string("dest_pos", minetest.pos_to_string(dest2))
 		minetest.get_meta(peer2):set_string("dest_pos", minetest.pos_to_string(dest1))
-		minetest.get_meta(pos1):set_string("dest_pos", nil)
-		minetest.get_meta(pos2):set_string("dest_pos", nil)
-		if tubelib.debug then
-			minetest.get_meta(peer1):set_string("infotext", minetest.pos_to_string(dest2))
-			minetest.get_meta(peer2):set_string("infotext", minetest.pos_to_string(dest1))
+		minetest.get_meta(peer1):set_string("infotext", minetest.pos_to_string(dest2))
+		minetest.get_meta(peer2):set_string("infotext", minetest.pos_to_string(dest1))
+		if cnt1 < 1 then
+			minetest.get_meta(pos1):set_string("dest_pos", nil)
 			minetest.get_meta(pos1):set_string("infotext", nil)
+		end
+		if cnt2 < 1 then
+			minetest.get_meta(pos2):set_string("dest_pos", nil)
 			minetest.get_meta(pos2):set_string("infotext", nil)
 		end
 	end
@@ -159,8 +162,8 @@ end
 
 local function after_tube_removed(pos, node)
 	local pos1, pos2 = nodetype_to_pos(nil, pos, node)
-	local peer1, dest1 = walk_to_peer(pos, pos1)
-	local peer2, dest2 = walk_to_peer(pos, pos2)
+	local cnt1, peer1, dest1 = walk_to_peer(pos, pos1)
+	local cnt2, peer2, dest2 = walk_to_peer(pos, pos2)
 	minetest.get_meta(peer1):set_string("dest_pos", minetest.pos_to_string(pos))
 	minetest.get_meta(peer2):set_string("dest_pos", minetest.pos_to_string(pos))
 	minetest.get_meta(pos1):set_string("dest_pos", minetest.pos_to_string(dest1))

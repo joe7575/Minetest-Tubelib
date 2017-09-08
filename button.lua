@@ -70,7 +70,7 @@ minetest.register_node("tubelib:button", {
 	end,
 
 	on_receive_fields = function(pos, formname, fields, player)
-		if tubelib.check_number(fields.number) then
+		if tubelib.check_numbers(fields.number) then
 			print(fields.number)
 			local meta = minetest.get_meta(pos)
 			meta:set_string("number", fields.number)
@@ -80,7 +80,7 @@ minetest.register_node("tubelib:button", {
 	end,
 	
 	on_rightclick = function(pos, node, clicker)
-		switch_on(pos, node, clicker:get_player_name())
+		switch_on(pos, node, nil)
 	end,
 
 	paramtype2 = "facedir",

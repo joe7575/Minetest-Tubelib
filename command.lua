@@ -44,9 +44,17 @@ function tubelib.get_server(dest_num)
 end	
 
 
--- Return true if number is known
-function tubelib.check_number(number)
-	return Number2Pos[number] ~= nil
+-- Return true if number(s) is/are known
+function tubelib.check_numbers(numbers)
+	if numbers then
+		for _,num in ipairs(string.split(numbers, " ")) do
+			if Number2Pos[num] == nil then
+				return false
+			end
+		end
+		return true
+	end
+	return false
 end	
 
 	
@@ -55,6 +63,7 @@ end
 -------------------------------------------------------------------
 
 -- Add server node position to the tubelib data base
+-- Function returns the assigned number for communication.
 function tubelib.add_server_node(pos, name, placer)
 	local number = get_number(pos)
 	Number2Pos[number] = {
@@ -76,22 +85,22 @@ end
 -- Send function
 -------------------------------------------------------------------
 
--- Send a command to all blocks referenced by 'destinations', a list of one or more numbers
--- separated by blanks. The command includes the topic string (e.g. "start") and
+-- Send a command to all blocks referenced by 'numbers', a list of 
+-- one or more destination addressses separated by blanks. 
+-- The command is based on the topic string (e.g. "start") and
 -- topic related payload.
 -- The player_name is needed to check the protection rights. If player is unknown
 -- use nil instead.
-function tubelib.send_cmnd(destinations, player_name, topic, payload)
-	for _,num in ipairs(string.split(destinations, " ")) do
+function tubelib.send_cmnd(numbers, player_name, topic, payload)
+	for _,num in ipairs(string.split(numbers, " ")) do
 		if Number2Pos[num] then
 			local data = Number2Pos[num]
 			if player_name == nil or not minetest.is_protected(data.pos, player_name) then
 				if tubelib.ReceiveFunction[data.name] then
-					return tubelib.ReceiveFunction[data.name](data.pos, topic, payload)
+					tubelib.ReceiveFunction[data.name](data.pos, topic, payload)
 				end
 			end
 		end
 	end
-	return false
 end		
 

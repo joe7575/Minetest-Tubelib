@@ -16,23 +16,19 @@
 local function switch_on(pos, node)
 	node.name = "tubelib:lamp_on"
 	minetest.swap_node(pos, node)
-	return true
 end	
 
 local function switch_off(pos, node)
 	node.name = "tubelib:lamp"
 	minetest.swap_node(pos, node)
-	return true
 end	
 
 local function command_reception(pos, topic, payload)
 	local node = minetest.get_node(pos)
 	if string.match(topic, "start") then
-		return switch_on(pos, node)
+		switch_on(pos, node)
 	elseif string.match(topic, "stop") then
-		return switch_off(pos, node)
-	else
-		return false
+		switch_off(pos, node)
 	end
 end
 

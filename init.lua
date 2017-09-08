@@ -89,10 +89,11 @@ end
 -- Registration functions
 -------------------------------------------------------------------
 
--- Register node name for tube push/pull calls
+-- Register functions for tube pushing/pulling
 -- Call this function only at load time!
-function tubelib.register_node_name(name)
+function tubelib.register_item_functions(name, push_clbk, pull_clbk)
 	tubelib.knownNodes[name] = true
+	tubelib.NodeTypes[name] = {push_clbk = push_clbk, pull_clbk = pull_clbk}
 end
 
 -------------------------------------------------------------------
@@ -167,4 +168,4 @@ dofile(minetest.get_modpath("tubelib") .. "/command.lua")
 dofile(minetest.get_modpath("tubelib") .. "/button.lua")
 dofile(minetest.get_modpath("tubelib") .. "/lamp.lua")
 dofile(minetest.get_modpath("tubelib") .. "/pusher.lua")
-
+dofile(minetest.get_modpath("tubelib") .. "/distributor.lua")

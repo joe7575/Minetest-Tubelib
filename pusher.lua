@@ -160,5 +160,5 @@ minetest.register_node("tubelib:pusher_active", {
 })
 
 tubelib.register_receive_function("tubelib:pusher", command_reception)
-tubelib.register_node_name("tubelib:pusher")	
-tubelib.register_node_name("tubelib:pusher_active")	
+tubelib.register_item_functions("tubelib:pusher", nil, nil)	
+tubelib.register_item_functions("tubelib:pusher_active", nil, nil)	
