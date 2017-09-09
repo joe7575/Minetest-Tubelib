@@ -144,6 +144,9 @@ local function keep_running(pos, elapsed)
 end
 
 local function on_receive_fields(pos, formname, fields, player)
+	if minetest.is_protected(pos, player:get_player_name()) then
+		return
+	end
 	local meta = minetest.get_meta(pos)
 	local running = minetest.deserialize(meta:get_string("running"))
 	if fields.running1 ~= nil then
