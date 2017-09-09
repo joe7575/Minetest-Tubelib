@@ -8,8 +8,12 @@
 	LGPLv2.1+
 	See LICENSE.txt for more information
 
-	History:
-	see init.lua
+	distributor.lua:
+	A more complex node acting as server and client.
+	This node claims a position number and registers its message and items interface.
+	The Distributor supports the following messages:
+	 - topic = "start", payload  = nil
+	 - topic = "stop" , payload  = nil
 
 ]]--
 
@@ -102,10 +106,8 @@ end
 
 local function start_the_machine(pos)
 	local node = minetest.get_node(pos)
-	if node.name ~= "tubelib:distributor_active" then
-		node.name = "tubelib:distributor_active"
-		minetest.swap_node(pos, node)
-	end
+	node.name = "tubelib:distributor_active"
+	minetest.swap_node(pos, node)
 	minetest.get_node_timer(pos):start(2)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
@@ -114,41 +116,29 @@ end
 
 local function stop_the_machine(pos)
 	local node = minetest.get_node(pos)
-	if node.name ~= "tubelib:distributor" then
-		node.name = "tubelib:distributor"
-		minetest.swap_node(pos, node)
-		minetest.get_node_timer(pos):stop()
-	end
+	node.name = "tubelib:distributor"
+	minetest.swap_node(pos, node)
+	minetest.get_node_timer(pos):stop()
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
 	meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
-end
-
-local function command_reception(pos, topic, payload)
-	if string.match(topic, "start") then
-		return start_the_machine(pos)
-	elseif string.match(topic, "stop") then
-		return stop_the_machine(pos)
-	else
-		return false
-	end
 end
 
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
 	local filter = minetest.deserialize(meta:get_string("filter"))
-	local item = tubelib.get_item(inv, "src")
+	local item = tubelib.get_item(inv, "src")							-- <<=== tubelib
 	local facedir = meta:get_int("facedir")
 	if item then
 		local side = get_next_side(meta, item:get_name(), filter)
-		if side then
-			if tubelib.push_items(pos, facedir, side, item) then
+		if side then			
+			if tubelib.push_items(pos, facedir, side, item) then		-- <<=== tubelib
 				return true
 			end
 		end
 		-- put item back to inventory
-		tubelib.put_item(inv, "src", item)
+		tubelib.put_item(inv, "src", item)								-- <<=== tubelib
 	end
 	return true
 end
@@ -190,9 +180,11 @@ minetest.register_node("tubelib:distributor", {
 	},
 
 	after_place_node = function(pos, placer)
-		local number = tubelib.add_server_node(pos, "tubelib:distributor", placer)
+		local number = tubelib.get_node_number(pos, "tubelib:distributor")		-- <<=== tubelib
 		local meta = minetest.get_meta(pos)
 		local facedir = minetest.dir_to_facedir(placer:get_look_dir(), false)
+		local placer_name = placer:get_player_name()
+
 		local running = {false,false,false,false}
 		meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
 		meta:set_string("formspec", distributor_formspec(running))
@@ -217,6 +209,7 @@ minetest.register_node("tubelib:distributor", {
 		local inv = meta:get_inventory()
 		if inv:is_empty("src") then
 			minetest.node_dig(pos, node, puncher, pointed_thing)
+			tubelib.remove_node(pos)												-- <<=== tubelib
 		end
 	end,
 
@@ -262,18 +255,26 @@ minetest.register_node("tubelib:distributor_active", {
 	is_ground_content = false,
 })
 
-local function get_items(pos)
-	local meta = minetest.get_meta(pos)
-	local inv = meta:get_inventory()
-	return tubelib.get_item(inv, "src")
-end
 
-local function put_items(pos, items)
-	local meta = minetest.get_meta(pos)
-	local inv = meta:get_inventory()
-	return tubelib.put_item(inv, "src", items)
-end
-
-tubelib.register_receive_function("tubelib:distributor", command_reception)
-tubelib.register_item_functions("tubelib:distributor", put_items, get_items)	
-tubelib.register_item_functions("tubelib:distributor_active", put_items, get_items)	
+--------------------------------------------------------------- tubelib
+tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"},
+	{
+	on_pull_item = function(pos)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		return tubelib.get_item(inv, "src")
+	end,
+	on_push_item = function(pos, item)
+		local meta = minetest.get_meta(pos)
+		local inv = meta:get_inventory()
+		return tubelib.put_item(inv, "src", item)
+	end,
+	on_recv_message = function(pos, topic, payload)
+		if topic == "start" then
+			start_the_machine(pos)
+		elseif topic == "stop" then
+			stop_the_machine(pos)
+		end
+	end,
+})	
+--------------------------------------------------------------- tubelib

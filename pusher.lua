@@ -8,8 +8,12 @@
 	LGPLv2.1+
 	See LICENSE.txt for more information
 
-	History:
-	see init.lua
+	pusher.lua:
+	Simple node for push/pull operation of StackItems from chests or other
+	inventory/server nodes to tubes or other inventory/server nodes.
+	The Pusher supports the following messages:
+	 - topic = "start", payload  = nil
+	 - topic = "stop" , payload  = nil
 
 ]]--
 
@@ -21,7 +25,6 @@ local function switch_on(pos, node)
 	node.name = "tubelib:pusher_active"
 	minetest.swap_node(pos, node)
 	minetest.get_node_timer(pos):start(2)
-	return true
 end	
 
 local function switch_off(pos, node)
@@ -32,29 +35,18 @@ local function switch_off(pos, node)
 	node.name = "tubelib:pusher"
 	minetest.swap_node(pos, node)
 	minetest.get_node_timer(pos):stop()
-	return true
 end	
 
-
-local function command_reception(pos, topic, payload)
-	local node = minetest.get_node(pos)
-	if string.match(topic, "start") then
-		return switch_on(pos, node)
-	elseif string.match(topic, "stop") then
-		return switch_off(pos, node)
-	else
-		return false
-	end
-end
 
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
 	local facedir = meta:get_int("facedir")
-	local items = tubelib.pull_items(pos, facedir, "L")
+	local items = tubelib.pull_items(pos, facedir, "L")						-- <<=== tubelib
 	if items ~= nil then
-		if tubelib.push_items(pos, facedir, "R", items) == false then
-			tubelib.push_items(pos, facedir, "L", items)
+		if tubelib.push_items(pos, facedir, "R", items) == false then		-- <<=== tubelib
+			-- place item back
+			tubelib.push_items(pos, facedir, "L", items)					-- <<=== tubelib
 			meta:set_string("infotext", "Pusher "..number..": blocked")
 		else
 			meta:set_string("infotext", "Pusher "..number..": running")
@@ -78,8 +70,8 @@ minetest.register_node("tubelib:pusher", {
 	},
 
 	after_place_node = function(pos, placer)
-		local number = tubelib.add_server_node(pos, "tubelib:pusher", placer)
 		local meta = minetest.get_meta(pos)
+		local number = tubelib.get_node_number(pos, "tubelib:pusher")			-- <<=== tubelib
 		local facedir = minetest.dir_to_facedir(placer:get_look_dir(), false)
 		meta:set_int("facedir", facedir)
 		meta:set_string("number", number)
@@ -90,6 +82,10 @@ minetest.register_node("tubelib:pusher", {
 		if not minetest.is_protected(pos, clicker:get_player_name()) then
 			switch_on(pos, node)
 		end
+	end,
+
+	after_dig_node = function(pos)
+		tubelib.remove_node(pos)												-- <<=== tubelib
 	end,
 
 	paramtype2 = "facedir",
@@ -159,6 +155,18 @@ minetest.register_node("tubelib:pusher_active", {
 	is_ground_content = false,
 })
 
-tubelib.register_receive_function("tubelib:pusher", command_reception)
-tubelib.register_item_functions("tubelib:pusher", nil, nil)	
-tubelib.register_item_functions("tubelib:pusher_active", nil, nil)	
+--------------------------------------------------------------- tubelib
+tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"},
+	{
+	on_pull_item = nil,
+	on_push_item = nil,
+	on_recv_message = function(pos, topic, payload)
+		local node = minetest.get_node(pos)
+		if topic == "start" then
+			switch_on(pos, node)
+		elseif topic == "stop" then
+			switch_off(pos, node)
+		end
+	end,
+})	
+--------------------------------------------------------------- tubelib

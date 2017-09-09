@@ -1,3 +1,20 @@
+--[[
+
+	Tube Library
+	============
+
+	Copyright (C) 2017 Joachim Stolberg
+
+	LGPLv2.1+
+	See LICENSE.txt for more information
+
+	command.lua:
+
+	User interface functions for message communication 
+  and StackItem push/pulling.
+
+]]--
+
 -------------------------------------------------------------------
 -- Data base storage
 -------------------------------------------------------------------
@@ -16,15 +33,25 @@ minetest.register_on_shutdown(function()
 	tubelib.update_mod_storage()
 end)
 
+local Name2Name = {}		-- translation table
 
 -------------------------------------------------------------------
--- Helper functions
+-- Local helper functions
 -------------------------------------------------------------------
+local function get_facedir(placer)
+	if placer then
+		return minetest.dir_to_facedir(placer:get_look_dir(), false)
+	end
+	return 0
+end
 
--- Store receive function for each type of block
-tubelib.ReceiveFunction = {}
-
-
+local function legacy_node(node)
+	if node and tubelib.legacyNodes[node.name] then
+		return true
+	end
+	return false
+end
+	
 -- Determine position related node number for addressing purposes
 local function get_number(pos)
 	local key = tubelib.get_key_str(pos)
@@ -34,17 +61,58 @@ local function get_number(pos)
 	end
 	return string.format("%.04u", Key2Number[key])
 end
+
+
+-------------------------------------------------------------------
+-- API helper functions
+-------------------------------------------------------------------
 	
--- Get server block data { pos, name, owner }	
-function tubelib.get_server(dest_num)
-	if Number2Pos[dest_num] then
-		return Number2Pos[dest_num]
+-- Determine neighbor position based on current pos, node facedir
+-- and the side F(orward), R(ight), B(ackward), L(eft), D(own), U(p).
+-- The function considers tubes in addition.
+function tubelib.get_pos(pos, facedir, side)
+	local offs = {F=0, R=1, B=2, L=3, D=4, U=5}
+	local dst_pos = table.copy(pos)
+	facedir = (facedir + offs[side]) % 4
+	local dir = tubelib.facedir_to_dir(facedir)
+	dst_pos = vector.add(dst_pos, dir)
+	local node = minetest.get_node(dst_pos)
+	if node and string.find(node.name, "tubelib:tube") then
+		dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos"))
+		if dst_pos == pos then	-- wrong side of a single tube node?
+			dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos2"))
+		end
+		node = minetest.get_node(dst_pos)
+		-- translate the current node name into the base name, used for registration
+		if Name2Name[node.name] then
+			node.name = Name2Name[node.name]
+		end
 	end
-	return nil
+	return node, dst_pos
 end	
 
+-- Generate a key string based on the given pos table,
+-- Used internaly as table key,
+function tubelib.get_key_str(pos)
+	pos = minetest.pos_to_string(pos)
+	return '"'..string.sub(pos, 2, -2)..'"'
+end
 
--- Return true if number(s) is/are known
+-- 6D variant of the facedir to dir conversion 
+function tubelib.facedir_to_dir(facedir)
+	local table = {[0] = 
+		{x=0, y=0, z=1},
+		{x=1, y=0, z=0},
+		{x=0, y=0, z=-1},
+		{x=-1, y=0, z=0},
+		{x=0, y=-1, z=0},
+		{x=0, y=1, z=0},
+	}
+	return table[facedir]
+end
+
+-- Check the given list of numbers.
+-- Returns true if number(s) is/are valid.
 function tubelib.check_numbers(numbers)
 	if numbers then
 		for _,num in ipairs(string.split(numbers, " ")) do
@@ -57,50 +125,171 @@ function tubelib.check_numbers(numbers)
 	return false
 end	
 
-	
--------------------------------------------------------------------
--- Registration functions
--------------------------------------------------------------------
-
--- Add server node position to the tubelib data base
--- Function returns the assigned number for communication.
-function tubelib.add_server_node(pos, name, placer)
+-- Determines and returns the node position number based on the given pos.
+function tubelib.get_node_number(pos, name)
 	local number = get_number(pos)
 	Number2Pos[number] = {
 		pos = pos, 
 		name = name,
-		owner = placer:get_player_name()
 	}
 	tubelib.update_mod_storage()
 	return number
 end
 
--- Register server receive function for tubelib commmunication
+-- Remove node from the position list
+function tubelib.remove_node(pos)
+	local number = get_number(pos)
+	if Number2Pos[number] then
+		Number2Pos[number] = {
+			pos = pos, 
+			name = nil,
+		}
+		tubelib.update_mod_storage()
+	end
+end
+
+
+-- Function returns { pos, name } for the node on the given position number.
+function tubelib.get_node_info(dest_num)
+	if Number2Pos[dest_num] then
+		return Number2Pos[dest_num]
+	end
+	return nil
+end	
+
+
+-------------------------------------------------------------------
+-- Node register function
+-------------------------------------------------------------------
+
+-- Register node for tubelib communication
 -- Call this function only at load time!
-function tubelib.register_receive_function(name, recv_clbk)
-	tubelib.ReceiveFunction[name] = recv_clbk
+-- Param 'add_names'  tbd  TODO
+-- Param 'node_definition' is a table according to:
+-- 
+--    {
+--        on_pull_item = func(pos),
+--            -- The function shall return an item stack with one element 
+-- 			  -- like ItemStack("default:cobble") or nil.
+--        on_push_item = func(pos, item),
+--        on_recv_message = func(pos, topic, payload),
+--    }
+--
+function tubelib.register_node(name, add_names, node_definition)
+	tubelib.knownNodes[name] = true
+	tubelib.NodeDef[name] = node_definition
+	Name2Name[name] = name
+	for _,n in ipairs(add_names) do
+		tubelib.knownNodes[n] = true
+		Name2Name[n] = name
+	end
 end
 
 -------------------------------------------------------------------
--- Send function
+-- Send message function
 -------------------------------------------------------------------
 
--- Send a command to all blocks referenced by 'numbers', a list of 
+-- Send a message to all blocks referenced by 'numbers', a list of 
 -- one or more destination addressses separated by blanks. 
--- The command is based on the topic string (e.g. "start") and
+-- The message is based on the topic string (e.g. "start") and
 -- topic related payload.
--- The player_name is needed to check the protection rights. If player is unknown
--- use nil instead.
-function tubelib.send_cmnd(numbers, player_name, topic, payload)
+-- The placer and clicker names are needed to check the protection rights. 
+-- If everybody should be able to send a message, use nil for clicker_name.
+function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload)
 	for _,num in ipairs(string.split(numbers, " ")) do
-		if Number2Pos[num] then
+		if Number2Pos[num] and Number2Pos[num].name then
 			local data = Number2Pos[num]
-			if player_name == nil or not minetest.is_protected(data.pos, player_name) then
-				if tubelib.ReceiveFunction[data.name] then
-					tubelib.ReceiveFunction[data.name](data.pos, topic, payload)
+			if placer_name and not minetest.is_protected(data.pos, placer_name) then
+				if clicker_name == nil or not minetest.is_protected(data.pos, clicker_name) then
+					if tubelib.NodeDef[data.name].on_recv_message then
+						tubelib.NodeDef[data.name].on_recv_message(data.pos, topic, payload)
+					end
 				end
 			end
 		end
 	end
 end		
 
+-------------------------------------------------------------------
+-- Client side Push/Pull item functions
+-------------------------------------------------------------------
+
+-- Param 'pos', 'facedir', and 'side' are used to determine the neighbor position.
+-- Param 'pos' is the own position
+-- Param 'facedir' is the own node facedir 
+-- Param 'side' is one of F(orward), R(ight), B(ackward), L(eft), D(own), U(p)
+-- relative to the placers view to the node.
+-- The function returns an item stack with one element like ItemStack("default:cobble")
+-- or nil.
+function tubelib.pull_items(pos, facedir, side)
+	local node, src_pos = tubelib.get_pos(pos, facedir, side)
+	if tubelib.NodeDef[node.name] and tubelib.NodeDef[node.name].on_pull_item then
+		return tubelib.NodeDef[node.name].on_pull_item(src_pos)
+	elseif legacy_node(node) then
+		local meta = minetest.get_meta(src_pos)
+		local inv = meta:get_inventory()
+		return tubelib.get_item(inv, "main")
+	end
+	return nil
+end
+
+-- Param 'pos', 'facedir', and 'side' are used to determine the neighbor position.
+-- Param 'pos' is the own position
+-- Param 'facedir' is the own node facedir 
+-- Param 'side' is one of F(orward), R(ight), B(ackward), L(eft), D(own), U(p)
+-- relative to the placers view to the node.
+-- Param 'item' is an item stack with one element like ItemStack("default:cobble")
+function tubelib.push_items(pos, facedir, side, items)
+	local node, dst_pos = tubelib.get_pos(pos, facedir, side)
+	if tubelib.NodeDef[node.name] and tubelib.NodeDef[node.name].on_push_item then
+		return tubelib.NodeDef[node.name].on_push_item(dst_pos, items)
+	elseif legacy_node(node) then
+		local meta = minetest.get_meta(dst_pos)
+		local inv = meta:get_inventory()
+		return tubelib.put_item(inv, "main", items)
+	elseif node and node.name == "air" then
+		minetest.add_item(dst_pos, items)
+		return true 
+	end
+	return false
+end
+
+
+-------------------------------------------------------------------
+-- Server side helper functions
+-------------------------------------------------------------------
+
+-- Get one item from the given ItemList. The position within the list
+-- is randomly selected so that different items stack will be considered.
+-- Returns nil if ItemList is empty.
+function tubelib.get_item(inv, listname)
+	if inv:is_empty(listname) then
+		--print("nil")
+		return nil
+	end
+	local stack, slot
+	local size = inv:get_size(listname)
+	local offs = math.random(size)
+	--print("tubelib.get_item", offs)
+	for idx = 1, size do
+		local slot = ((idx + offs) % size) + 1
+		local items = inv:get_stack(listname, slot)
+		if items:get_count() > 0 then
+			local taken = items:take_item(1)
+			inv:set_stack(listname, slot, items)
+			return taken
+		end
+	end
+	return nil
+end
+
+
+-- Put the given item into the given ItemList.
+-- Function returns false if ItemList is full.
+function tubelib.put_item(inv, listname, item)
+	if inv:room_for_item(listname, item) then
+		inv:add_item(listname, item)
+		return true
+	end
+	return false
+end

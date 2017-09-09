@@ -133,10 +133,18 @@ local function update_head_tubes(pos)
 		local pos1, pos2 = nodetype_to_pos(nil, pos, node)
 		local cnt1, peer1, dest1 = walk_to_peer(pos, pos1)
 		local cnt2, peer2, dest2 = walk_to_peer(pos, pos2)
-		minetest.get_meta(peer1):set_string("dest_pos", minetest.pos_to_string(dest2))
-		minetest.get_meta(peer2):set_string("dest_pos", minetest.pos_to_string(dest1))
-		minetest.get_meta(peer1):set_string("infotext", minetest.pos_to_string(dest2))
-		minetest.get_meta(peer2):set_string("infotext", minetest.pos_to_string(dest1))
+		if cnt1 == 0 and cnt2 == 0 then	-- first tube node placed?
+			-- we have to store both dest positions, used by
+			minetest.get_meta(peer1):set_string("dest_pos", minetest.pos_to_string(dest2))
+			minetest.get_meta(peer2):set_string("dest_pos2", minetest.pos_to_string(dest1))
+			minetest.get_meta(peer1):set_string("infotext", minetest.pos_to_string(dest1)..":"..minetest.pos_to_string(dest2))
+		else
+			minetest.get_meta(peer1):set_string("dest_pos", minetest.pos_to_string(dest2))
+			minetest.get_meta(peer2):set_string("dest_pos", minetest.pos_to_string(dest1))
+			minetest.get_meta(peer1):set_string("infotext", minetest.pos_to_string(dest2))
+			minetest.get_meta(peer2):set_string("infotext", minetest.pos_to_string(dest1))
+		end
+		-- delete meta data from old head nodes
 		if cnt1 > 1 then
 			minetest.get_meta(pos1):set_string("dest_pos", nil)
 			minetest.get_meta(pos1):set_string("infotext", nil)
