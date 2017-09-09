@@ -62,7 +62,25 @@ local function get_number(pos)
 	return string.format("%.04u", Key2Number[key])
 end
 
-
+local FuelTbl = {
+	["default:tree"] = true,
+	["default:wood"] = true,
+	["default:leaves"] = true,
+	["default:jungletree"] = true,
+	["default:junglewood"] = true,
+	["default:jungleleaves"] = true,
+	["default:pine_tree"] = true,
+	["default:pine_wood"] = true,
+	["default:pine_needles"] = true,
+	["default:acacia_tree"] = true,
+	["default:acacia_wood"] = true,
+	["default:acacia_leaves"] = true,
+	["default:aspen_tree"] = true,
+	["default:aspen_wood"] = true,
+	["default:aspen_leaves"] = true,
+	["default:coalblock"] = true,
+}
+	
 -------------------------------------------------------------------
 -- API helper functions
 -------------------------------------------------------------------
@@ -83,10 +101,10 @@ function tubelib.get_pos(pos, facedir, side)
 			dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos2"))
 		end
 		node = minetest.get_node(dst_pos)
-		-- translate the current node name into the base name, used for registration
-		if Name2Name[node.name] then
-			node.name = Name2Name[node.name]
-		end
+	end
+	-- translate the current node name into the base name, used at registration
+	if Name2Name[node.name] then
+		node.name = Name2Name[node.name]
 	end
 	return node, dst_pos
 end	
@@ -228,7 +246,11 @@ function tubelib.pull_items(pos, facedir, side)
 	elseif legacy_node(node) then
 		local meta = minetest.get_meta(src_pos)
 		local inv = meta:get_inventory()
-		return tubelib.get_item(inv, "main")
+		if node.name == "default:furnace" or node.name == "default:furnace_active" then
+			return tubelib.get_item(inv, "dst")
+		else
+			return tubelib.get_item(inv, "main")
+		end
 	end
 	return nil
 end
@@ -241,12 +263,22 @@ end
 -- Param 'item' is an item stack with one element like ItemStack("default:cobble")
 function tubelib.push_items(pos, facedir, side, items)
 	local node, dst_pos = tubelib.get_pos(pos, facedir, side)
+	--print(node.name, items:get_name())
 	if tubelib.NodeDef[node.name] and tubelib.NodeDef[node.name].on_push_item then
 		return tubelib.NodeDef[node.name].on_push_item(dst_pos, items)
 	elseif legacy_node(node) then
 		local meta = minetest.get_meta(dst_pos)
 		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "main", items)
+		if node.name == "default:furnace" or node.name == "default:furnace_active" then
+			minetest.get_node_timer(dst_pos):start(1.0)
+			if FuelTbl[items:get_name()] == true then
+				return tubelib.put_item(inv, "fuel", items)
+			else
+				return tubelib.put_item(inv, "src", items)
+			end
+		else
+			return tubelib.put_item(inv, "main", items)
+		end
 	elseif node and node.name == "air" then
 		minetest.add_item(dst_pos, items)
 		return true 

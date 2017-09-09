@@ -60,10 +60,10 @@ minetest.register_node("tubelib:button", {
 	tiles = {
 		-- up, down, right, left, back, front
 		'tubelib_front.png',
-		'tubelib_front.png',
-		'tubelib_front.png',
-		'tubelib_front.png',
-		'tubelib_front.png',
+		'tubelib_button.png',
+		'tubelib_button.png',
+		'tubelib_button.png',
+		'tubelib_button.png',
 		"tubelib_button_off.png",
 	},
 
@@ -103,16 +103,15 @@ minetest.register_node("tubelib:button", {
 })
 
 
-minetest.register_node("tubelib:button_active",
-	{
+minetest.register_node("tubelib:button_active", {
 	description = "Tubelib Button",
 	tiles = {
 		-- up, down, right, left, back, front
 		'tubelib_front.png',
-		'tubelib_front.png',
-		'tubelib_front.png',
-		'tubelib_front.png',
-		'tubelib_front.png',
+		'tubelib_button.png',
+		'tubelib_button.png',
+		'tubelib_button.png',
+		'tubelib_button.png',
 		"tubelib_button_on.png",
 	},
 

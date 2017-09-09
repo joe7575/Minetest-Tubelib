@@ -76,8 +76,7 @@ minetest.register_node("tubelib:lamp_on", {
 
 
 --------------------------------------------------------------- tubelib
-tubelib.register_node("tubelib:lamp", {"tubelib:lamp_on"},
-{
+tubelib.register_node("tubelib:lamp", {"tubelib:lamp_on"}, {
 	on_pull_item = nil,
 	on_push_item = nil,
 	on_recv_message = function(pos, topic, payload)

@@ -156,8 +156,7 @@ minetest.register_node("tubelib:pusher_active", {
 })
 
 --------------------------------------------------------------- tubelib
-tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"},
-	{
+tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
 	on_pull_item = nil,
 	on_push_item = nil,
 	on_recv_message = function(pos, topic, payload)

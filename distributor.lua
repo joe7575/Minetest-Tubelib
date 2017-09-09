@@ -257,8 +257,7 @@ minetest.register_node("tubelib:distributor_active", {
 
 
 --------------------------------------------------------------- tubelib
-tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"},
-	{
+tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 	on_pull_item = function(pos)
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()

@@ -20,6 +20,8 @@ tubelib = {
 
 tubelib.debug = true
 
+
+-- used by tubes to contact
 tubelib.knownNodes = {
 	["tubelib:tube1"] = true,
 	["tubelib:tube2"] = true,
@@ -29,11 +31,16 @@ tubelib.knownNodes = {
 	["tubelib:tube6"] = true,
 	["default:chest_locked"] = true,
 	["default:chest"] = true,
+	["default:furnace"] = true,
+	["default:furnace_active"] = true,
 }
 
+-- used by push_item/pull_item
 tubelib.legacyNodes = {
 	["default:chest_locked"] = true,
 	["default:chest"] = true,
+	["default:furnace"] = true,
+	["default:furnace_active"] = true,
 }
 
 
