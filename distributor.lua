@@ -17,6 +17,54 @@
 
 ]]--
 
+-- Return a key/value table with all items and the corresponding stack numbers
+local function invlist_content_as_kvlist(list)
+	local res = {}
+	for idx,items in ipairs(list) do
+		local name = items:get_name()
+		if name ~= "" then
+			res[name] = idx
+		end
+	end
+	return res
+end
+
+-- Return the total number of list entries
+local function invlist_num_entries(list)
+	local res = 0
+	for _,items in ipairs(list) do
+		local name = items:get_name()
+		if name ~= "" then
+			res = res + items:get_count()
+		end
+	end
+	return res
+end
+
+-- Return a flat table with all items
+local function invlist_entries_as_list(list)
+	local res = {}
+	for _,items in ipairs(list) do
+		local name = items:get_name()
+		local count = items:get_count()
+		if name ~= "" then
+			for i = 1,count do
+				res[#res+1] = name
+			end
+		end
+	end
+	return res
+end
+
+
+local function AddToTbl(kvTbl, new_items)
+	for _, l in ipairs(new_items) do 
+		kvTbl[l] = true 
+	end
+	return kvTbl
+end
+
+
 local function distributor_formspec(running)
 	return "size[8,8.5]"..
 	default.gui_bg..
@@ -43,13 +91,19 @@ local function distributor_formspec(running)
 end
 
 local function allow_metadata_inventory_put(pos, listname, index, stack, player)
+	local meta = minetest.get_meta(pos)
+	local inv = meta:get_inventory()
+	local list = inv:get_list(listname)
+	
 	if minetest.is_protected(pos, player:get_player_name()) then
 		return 0
 	end
 	if listname == "src" then
 		return stack:get_count()
-	else
+	elseif invlist_num_entries(list) < 4 then
 		return 1
+	else
+		return 0
 	end
 end
 
@@ -60,48 +114,41 @@ local function allow_metadata_inventory_take(pos, listname, index, stack, player
 	return stack:get_count()
 end
 
-local function filter_settings(meta)
+local function allow_metadata_inventory_move(pos, from_list, from_index, to_list, to_index, count, player)
+	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
-	local red = inv:get_list("red")
-	local green = inv:get_list("green")
-	local blue = inv:get_list("blue")
-	local yellow = inv:get_list("yellow")
-	local filter = {{},{},{},{}}
-	for idx,itemlist in ipairs({red, green, blue, yellow}) do
-		for _,items in ipairs(itemlist) do
-			if items:get_count() == 1 then
-				filter[idx][#filter[idx]+1] = items:get_name()
-			end
-		end
-	end
-	meta:set_string("filter", minetest.serialize(filter))
+	local stack = inv:get_stack(from_list, from_index)
+	return allow_metadata_inventory_put(pos, to_list, to_index, stack, player)
 end
 
-local function get_next_side(meta, item_name, filter)
+local SlotColors = {"red", "green", "blue", "yellow"}
+local Num2Ascii = {"F", "L", "B", "R"}		-- color to side translation
+local FilterCache = {}						-- local cache for filter settings
+
+local function filter_settings(pos)
+	local hash = minetest.hash_node_position(pos)
+	local meta = minetest.get_meta(pos)
+	local inv = meta:get_inventory()
+	local facedir = meta:get_int("facedir")
 	local running = minetest.deserialize(meta:get_string("running"))
-	local side = meta:get_int("side") or 0
-	local num2asc = {"F", "L", "B", "R"}
-	meta:set_int("side", (side + 1) % 4)
-	local i, idx
-	for i = 1,4 do
-		idx = ((i + side) % 4) + 1
+	local kvFilterItemNames = {}  	-- {<item:name> = true,...}
+	local kvSide2ItemNames = {}		-- {"F" = {<item:name>,...},...}
+	
+	-- collect all filter settings
+	for idx,slot in ipairs(SlotColors) do
+		local side = Num2Ascii[idx]
 		if running[idx] == true then
-			for _,name in ipairs(filter[idx]) do
-				if name == item_name then
-					return num2asc[idx]
-				end
-			end
+			local list = inv:get_list(slot)
+			local filter = invlist_entries_as_list(list)
+			AddToTbl(kvFilterItemNames, filter)
+			kvSide2ItemNames[side] = filter
 		end
 	end
-	for i = 1,4 do
-		idx = ((i + side) % 4) + 1
-		if running[idx] == true then
-			if #filter[idx] == 0 then
-				return num2asc[idx]
-			end
-		end
-	end
-	return nil
+	
+	FilterCache[hash] = {
+		kvFilterItemNames = kvFilterItemNames, 
+		kvSide2ItemNames = kvSide2ItemNames
+	}
 end
 
 local function start_the_machine(pos)
@@ -124,21 +171,57 @@ local function stop_the_machine(pos)
 	meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
 end
 
+-- move items to the output slots
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
-	local inv = meta:get_inventory()
-	local filter = minetest.deserialize(meta:get_string("filter"))
-	local item = tubelib.get_item(inv, "src")							-- <<=== tubelib
 	local facedir = meta:get_int("facedir")
-	if item then
-		local side = get_next_side(meta, item:get_name(), filter)
-		if side then			
-			if tubelib.push_items(pos, facedir, side, item) then		-- <<=== tubelib
-				return true
+	local slot_idx = meta:get_int("slot_idx") or 1
+	meta:set_int("slot_idx", (slot_idx + 1) % 4)
+	local side = Num2Ascii[slot_idx+1]
+	local listname = SlotColors[slot_idx+1]
+	local inv = meta:get_inventory()
+	local list = inv:get_list("src")
+	local kvSrc = invlist_content_as_kvlist(list)
+	
+	-- calculate the filter settings only once
+	local hash = minetest.hash_node_position(pos)
+	if FilterCache[hash] == nil then
+		filter_settings(pos)
+	end
+	
+	-- read data from Cache 
+	-- all filter items as key/value  {<item:name> = true,...}
+	local kvFilterItemNames = FilterCache[hash].kvFilterItemNames
+	-- filter items of one slot as list  {<item:name>,...}
+	local names = FilterCache[hash].kvSide2ItemNames[side]
+	
+	if names == nil then
+		-- filter closed
+		return true
+	end
+	
+	-- move items from configured filters to the output
+	if next(names) then
+		for _,name in ipairs(names) do
+			if kvSrc[name] then
+				local item = tubelib.get_this_item(inv, "src", kvSrc[name])		-- <<=== tubelib
+				if item then
+					tubelib.push_items(pos, facedir,  side, item)				-- <<=== tubelib
+				end
 			end
 		end
-		-- put item back to inventory
-		tubelib.put_item(inv, "src", item)								-- <<=== tubelib
+	end
+	
+	-- move additional items from unconfigured filters to the output
+	if next(names) == nil then
+		for name,_ in pairs(kvSrc) do
+			if kvFilterItemNames[name] == nil then  -- not in the filter so far?
+				local item = tubelib.get_this_item(inv, "src", kvSrc[name])			-- <<=== tubelib
+				if item then
+					tubelib.push_items(pos, facedir,  side, item)					-- <<=== tubelib
+				end
+			end
+		end
 	end
 	return true
 end
@@ -161,8 +244,8 @@ local function on_receive_fields(pos, formname, fields, player)
 	meta:set_string("running", minetest.serialize(running))
 	meta:set_string("formspec", distributor_formspec(running))
 	if fields.button ~= nil then
+		filter_settings(pos)
 		if running[1] or running[2] or running[3] or running[4] then
-			filter_settings(meta)
 			start_the_machine(pos)
 		else
 			stop_the_machine(pos)
@@ -218,6 +301,7 @@ minetest.register_node("tubelib:distributor", {
 
 	allow_metadata_inventory_put = allow_metadata_inventory_put,
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
 
 	paramtype2 = "facedir",
 	groups = {cracky=1},
@@ -250,12 +334,22 @@ minetest.register_node("tubelib:distributor_active", {
 	
 	allow_metadata_inventory_put = allow_metadata_inventory_put,
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
+	allow_metadata_inventory_move = allow_metadata_inventory_move,
 
 	on_timer = keep_running,
 
 	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
+})
+
+minetest.register_craft({
+	output = "tubelib:distributor 2",
+	recipe = {
+		{"group:wood", 		"default:steel_ingot",  "group:wood"},
+		{"tubelib:tube1", 	"default:mese_crystal",	"tubelib:tube1"},
+		{"group:wood", 		"default:steel_ingot",  "group:wood"},
+	},
 })
 
 

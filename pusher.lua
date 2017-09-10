@@ -155,6 +155,15 @@ minetest.register_node("tubelib:pusher_active", {
 	is_ground_content = false,
 })
 
+minetest.register_craft({
+	output = "tubelib:pusher 2",
+	recipe = {
+		{"group:wood", 		"wool:dark_green",   	"group:wood"},
+		{"tubelib:tube1", 	"default:mese_crystal",	"tubelib:tube1"},
+		{"group:wood", 		"wool:dark_green",   	"group:wood"},
+	},
+})
+
 --------------------------------------------------------------- tubelib
 tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
 	on_pull_item = nil,

@@ -294,3 +294,12 @@ for idx,pos in ipairs(DirCorrections) do
     })
 end
 
+
+minetest.register_craft({
+	output = "tubelib:tube1 4",
+	recipe = {
+		{"default:steel_ingot", "",    "group:wood"},
+		{"",           "group:wood",   ""},
+		{"group:wood", "",             "default:tin_ingot"},
+	},
+})

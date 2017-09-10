@@ -74,6 +74,14 @@ minetest.register_node("tubelib:lamp_on", {
 	is_ground_content = false,
 })
 
+minetest.register_craft({
+	output = "tubelib:lamp 4",
+	recipe = {
+		{"wool:white", 		"wool:white",  			"wool:white"},
+		{"tubelib:tube1", 	"default:coal_lump",	""},
+		{"group:wood", 		"",  					"group:wood"},
+	},
+})
 
 --------------------------------------------------------------- tubelib
 tubelib.register_node("tubelib:lamp", {"tubelib:lamp_on"}, {

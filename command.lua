@@ -38,6 +38,13 @@ local Name2Name = {}		-- translation table
 -------------------------------------------------------------------
 -- Local helper functions
 -------------------------------------------------------------------
+-- Localize functions to avoid table lookups (better performance).
+local string_find = string.find
+local string_split = string.split
+local minetest_is_protected = minetest.is_protected
+local tubelib_NodeDef = tubelib.NodeDef
+
+
 local function get_facedir(placer)
 	if placer then
 		return minetest.dir_to_facedir(placer:get_look_dir(), false)
@@ -95,10 +102,12 @@ function tubelib.get_pos(pos, facedir, side)
 	local dir = tubelib.facedir_to_dir(facedir)
 	dst_pos = vector.add(dst_pos, dir)
 	local node = minetest.get_node(dst_pos)
-	if node and string.find(node.name, "tubelib:tube") then
-		dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos"))
-		if dst_pos == pos then	-- wrong side of a single tube node?
+	if node and string_find(node.name, "tubelib:tube") then
+		local _pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos"))
+		if vector.equals(_pos, pos) then		-- wrong side of a single tube node?
 			dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos2"))
+		else
+			dst_pos = _pos
 		end
 		node = minetest.get_node(dst_pos)
 	end
@@ -133,7 +142,7 @@ end
 -- Returns true if number(s) is/are valid.
 function tubelib.check_numbers(numbers)
 	if numbers then
-		for _,num in ipairs(string.split(numbers, " ")) do
+		for _,num in ipairs(string_split(numbers, " ")) do
 			if Number2Pos[num] == nil then
 				return false
 			end
@@ -195,7 +204,7 @@ end
 --
 function tubelib.register_node(name, add_names, node_definition)
 	tubelib.knownNodes[name] = true
-	tubelib.NodeDef[name] = node_definition
+	tubelib_NodeDef[name] = node_definition
 	Name2Name[name] = name
 	for _,n in ipairs(add_names) do
 		tubelib.knownNodes[n] = true
@@ -214,13 +223,13 @@ end
 -- The placer and clicker names are needed to check the protection rights. 
 -- If everybody should be able to send a message, use nil for clicker_name.
 function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload)
-	for _,num in ipairs(string.split(numbers, " ")) do
+	for _,num in ipairs(string_split(numbers, " ")) do
 		if Number2Pos[num] and Number2Pos[num].name then
 			local data = Number2Pos[num]
-			if placer_name and not minetest.is_protected(data.pos, placer_name) then
-				if clicker_name == nil or not minetest.is_protected(data.pos, clicker_name) then
-					if tubelib.NodeDef[data.name].on_recv_message then
-						tubelib.NodeDef[data.name].on_recv_message(data.pos, topic, payload)
+			if placer_name and not minetest_is_protected(data.pos, placer_name) then
+				if clicker_name == nil or not minetest_is_protected(data.pos, clicker_name) then
+					if tubelib_NodeDef[data.name].on_recv_message then
+						tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
 					end
 				end
 			end
@@ -241,8 +250,8 @@ end
 -- or nil.
 function tubelib.pull_items(pos, facedir, side)
 	local node, src_pos = tubelib.get_pos(pos, facedir, side)
-	if tubelib.NodeDef[node.name] and tubelib.NodeDef[node.name].on_pull_item then
-		return tubelib.NodeDef[node.name].on_pull_item(src_pos)
+	if tubelib_NodeDef[node.name] and tubelib_NodeDef[node.name].on_pull_item then
+		return tubelib_NodeDef[node.name].on_pull_item(src_pos)
 	elseif legacy_node(node) then
 		local meta = minetest.get_meta(src_pos)
 		local inv = meta:get_inventory()
@@ -264,8 +273,8 @@ end
 function tubelib.push_items(pos, facedir, side, items)
 	local node, dst_pos = tubelib.get_pos(pos, facedir, side)
 	--print(node.name, items:get_name())
-	if tubelib.NodeDef[node.name] and tubelib.NodeDef[node.name].on_push_item then
-		return tubelib.NodeDef[node.name].on_push_item(dst_pos, items)
+	if tubelib_NodeDef[node.name] and tubelib_NodeDef[node.name].on_push_item then
+		return tubelib_NodeDef[node.name].on_push_item(dst_pos, items)
 	elseif legacy_node(node) then
 		local meta = minetest.get_meta(dst_pos)
 		local inv = meta:get_inventory()
@@ -311,6 +320,22 @@ function tubelib.get_item(inv, listname)
 			inv:set_stack(listname, slot, items)
 			return taken
 		end
+	end
+	return nil
+end
+
+-- Get one item from the given ItemList, specified by stack number (1..n).
+-- Returns nil if ItemList is empty.
+function tubelib.get_this_item(inv, listname, number)
+	if inv:is_empty(listname) then
+		return nil
+	end
+	
+	local items = inv:get_stack(listname, number)
+	if items:get_count() > 0 then
+		local taken = items:take_item(1)
+		inv:set_stack(listname, number, items)
+		return taken
 	end
 	return nil
 end

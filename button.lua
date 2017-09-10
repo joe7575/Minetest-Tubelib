@@ -121,3 +121,13 @@ minetest.register_node("tubelib:button_active", {
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
 })
+
+minetest.register_craft({
+	output = "tubelib:button 4",
+	recipe = {
+		{"group:wood", 		"group:wood",  			"group:wood"},
+		{"dye:red", 		"default:mese_crystal",	"tubelib:tube1"},
+		{"group:wood", 		"default:glass",  		"group:wood"},
+	},
+})
+
