@@ -104,9 +104,13 @@ function tubelib.get_pos(pos, facedir, side)
 	local node = minetest.get_node(dst_pos)
 	if node and string_find(node.name, "tubelib:tube") then
 		local _pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos"))
-		if vector.equals(_pos, pos) then		-- wrong side of a single tube node?
+		-- two possible reasons, why _pos == pos:
+		-- 1)  wrong side of a single tube node
+		-- 2)  node connected with itself. In this case "dest_pos2" is not available
+		if vector.equals(_pos, pos) then		--
 			dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos2"))
-		else
+		end
+		if dst_pos == nil then
 			dst_pos = _pos
 		end
 		node = minetest.get_node(dst_pos)
@@ -228,7 +232,7 @@ function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload
 			local data = Number2Pos[num]
 			if placer_name and not minetest_is_protected(data.pos, placer_name) then
 				if clicker_name == nil or not minetest_is_protected(data.pos, clicker_name) then
-					if tubelib_NodeDef[data.name].on_recv_message then
+					if data and data.name and tubelib_NodeDef[data.name].on_recv_message then
 						tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
 					end
 				end

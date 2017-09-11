@@ -10,6 +10,7 @@
 
 	History:
 	2017-09-08  v0.01  first version
+	2017-09-11  v0.02  bugfix in tubelib.get_pos()
 
 ]]--
 
