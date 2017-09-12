@@ -23,15 +23,19 @@ local Key2Number = minetest.deserialize(storage:get_string("Key2Number")) or {}
 local NextNumber = minetest.deserialize(storage:get_string("NextNumber")) or 1
 local Number2Pos = minetest.deserialize(storage:get_string("Number2Pos")) or {}
 
-function tubelib.update_mod_storage()
+local function update_mod_storage()
 	storage:set_string("Key2Number", minetest.serialize(Key2Number))
 	storage:set_string("NextNumber", minetest.serialize(NextNumber))
 	storage:set_string("Number2Pos", minetest.serialize(Number2Pos))
 end
 
 minetest.register_on_shutdown(function()
-	tubelib.update_mod_storage()
+	update_mod_storage()
 end)
+
+-- store data each hour
+minetest.after(60*60, update_mod_storage)
+
 
 local Name2Name = {}		-- translation table
 
@@ -165,7 +169,6 @@ function tubelib.get_node_number(pos, name)
 		pos = pos, 
 		name = name,
 	}
-	tubelib.update_mod_storage()
 	return number
 end
 
@@ -177,7 +180,6 @@ function tubelib.remove_node(pos)
 			pos = pos, 
 			name = nil,
 		}
-		tubelib.update_mod_storage()
 	end
 end
 
