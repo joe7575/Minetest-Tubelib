@@ -108,9 +108,11 @@ function tubelib.get_pos(pos, facedir, side)
 		-- 1)  wrong side of a single tube node
 		-- 2)  node connected with itself. In this case "dest_pos2" is not available
 		if vector.equals(_pos, pos) then		--
-			dst_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos2"))
+			_pos = minetest.string_to_pos(minetest.get_meta(dst_pos):get_string("dest_pos2"))
 		end
-		if dst_pos == nil then
+		if _pos == nil then
+			dst_pos = pos
+		else
 			dst_pos = _pos
 		end
 		node = minetest.get_node(dst_pos)
@@ -276,7 +278,6 @@ end
 -- Param 'item' is an item stack with one element like ItemStack("default:cobble")
 function tubelib.push_items(pos, facedir, side, items)
 	local node, dst_pos = tubelib.get_pos(pos, facedir, side)
-	--print(node.name, items:get_name())
 	if tubelib_NodeDef[node.name] and tubelib_NodeDef[node.name].on_push_item then
 		return tubelib_NodeDef[node.name].on_push_item(dst_pos, items)
 	elseif legacy_node(node) then

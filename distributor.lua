@@ -206,7 +206,9 @@ local function keep_running(pos, elapsed)
 			if kvSrc[name] then
 				local item = tubelib.get_this_item(inv, "src", kvSrc[name])		-- <<=== tubelib
 				if item then
-					tubelib.push_items(pos, facedir,  side, item)				-- <<=== tubelib
+					if not tubelib.push_items(pos, facedir, side, item) then	-- <<=== tubelib
+						tubelib.put_item(inv, "src", item)
+					end
 				end
 			end
 		end
@@ -218,7 +220,9 @@ local function keep_running(pos, elapsed)
 			if kvFilterItemNames[name] == nil then  -- not in the filter so far?
 				local item = tubelib.get_this_item(inv, "src", kvSrc[name])			-- <<=== tubelib
 				if item then
-					tubelib.push_items(pos, facedir,  side, item)					-- <<=== tubelib
+					if not tubelib.push_items(pos, facedir, side, item) then		-- <<=== tubelib
+						tubelib.put_item(inv, "src", item)
+					end
 				end
 			end
 		end
