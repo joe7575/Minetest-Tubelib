@@ -16,13 +16,10 @@
 
 ]]--
 
-CYCLE_TIME = 4
-
 
 local function switch_on(pos, node)
 	node.name = "tubelib:button_active"
 	minetest.swap_node(pos, node)
-	minetest.get_node_timer(pos):start(CYCLE_TIME)
 	minetest.sound_play("button", {
 			pos = pos,
 			gain = 0.5,
@@ -30,6 +27,10 @@ local function switch_on(pos, node)
 		})
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
+	local cycle_time = meta:get_int("cycle_time")
+	if cycle_time > 0 then 	-- button mode?
+		minetest.get_node_timer(pos):start(cycle_time)
+	end
 	local placer_name = meta:get_string("placer_name")
 	local clicker_name = nil
 	if meta:get_string("public") == "false" then
@@ -56,7 +57,7 @@ end
 
 
 minetest.register_node("tubelib:button", {
-	description = "Tubelib Button",
+	description = "Tubelib Button/Switch",
 	tiles = {
 		-- up, down, right, left, back, front
 		'tubelib_front.png',
@@ -69,12 +70,14 @@ minetest.register_node("tubelib:button", {
 
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("formspec", "size[4,3]"..
-		"field[0.5,0.5;3,1;number;Insert destination block number;]" ..
-		"checkbox[1,1;public;public;false]"..
-		"button_exit[1,2;2,1;exit;Save]")
+		meta:set_string("formspec", "size[5,6]"..
+		"dropdown[0.2,0;3;type;switch,button 2s,button 4s,button 8s,button 16s;1]".. 
+		"field[0.5,2;3,1;number;Insert destination block number;]" ..
+		"checkbox[1,3;public;public;false]"..
+		"button_exit[1,4;2,1;exit;Save]")
 		meta:set_string("placer_name", placer:get_player_name())
 		meta:set_string("public", "false")
+		meta:set_int("cycle_time", 0)
 	end,
 
 	on_receive_fields = function(pos, formname, fields, player)
@@ -85,6 +88,21 @@ minetest.register_node("tubelib:button", {
 		end
 		if fields.public then
 			meta:set_string("public", fields.public)
+		end
+		local cycle_time = nil
+		if fields.type == "switch" then
+			cycle_time = 0
+		elseif fields.type == "button 2s" then
+			cycle_time = 2
+		elseif fields.type == "button 4s" then
+			cycle_time = 4
+		elseif fields.type == "button 8s" then
+			cycle_time = 8
+		elseif fields.type == "button 16s" then
+			cycle_time = 16
+		end
+		if cycle_time ~= nil then
+			meta:set_int("cycle_time", cycle_time)
 		end
 		if fields.exit then
 			meta:set_string("formspec", nil)
@@ -98,13 +116,13 @@ minetest.register_node("tubelib:button", {
 	end,
 
 	paramtype2 = "facedir",
-	groups = {cracky=1},
+	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
 })
 
 
 minetest.register_node("tubelib:button_active", {
-	description = "Tubelib Button",
+	description = "Tubelib Button/Switch",
 	tiles = {
 		-- up, down, right, left, back, front
 		'tubelib_front.png',
@@ -114,6 +132,12 @@ minetest.register_node("tubelib:button_active", {
 		'tubelib_button.png',
 		"tubelib_button_on.png",
 	},
+
+	on_rightclick = function(pos, node, clicker)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("clicker_name", clicker:get_player_name())
+		switch_off(pos, node)
+	end,
 
 	on_timer = switch_off,
 
