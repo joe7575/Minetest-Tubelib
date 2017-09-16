@@ -69,7 +69,7 @@ minetest.register_node("tubelib:lamp_on", {
 	end,
 
 	paramtype = 'light',
-	light_source = 8,	
+	light_source = LIGHT_MAX,	
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
 })
