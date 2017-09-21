@@ -357,3 +357,22 @@ function tubelib.put_item(inv, listname, item)
 	end
 	return false
 end
+
+-- Get the number of items from the given ItemList.
+-- Returns nil if the number is not available.
+function tubelib.get_num_items(inv, listname, num)
+	if inv:is_empty(listname) then
+		return nil
+	end
+	local size = inv:get_size(listname)
+	for idx = 1, size do
+		local items = inv:get_stack(listname, idx)
+		if items:get_count() >= num then
+			local taken = items:take_item(num)
+			inv:set_stack(listname, idx, items)
+			return taken
+		end
+	end
+	return nil
+end
+

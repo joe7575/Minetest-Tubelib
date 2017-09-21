@@ -11,6 +11,7 @@
 	History:
 	2017-09-08  v0.01  first version
 	2017-09-12  v0.02  bugfix in tubelib.get_pos() and others
+	2017-09-21  v0.03  function get_num_items added
 
 ]]--
 
@@ -40,6 +41,8 @@ tubelib.knownNodes = {
 tubelib.legacyNodes = {
 	["default:chest_locked"] = true,
 	["default:chest"] = true,
+	["default:chest_locked_open"] = true,
+	["default:chest_open"] = true,
 	["default:furnace"] = true,
 	["default:furnace_active"] = true,
 }
