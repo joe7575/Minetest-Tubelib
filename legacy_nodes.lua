@@ -17,18 +17,15 @@
 tubelib.register_node("default:chest", {"default:chest_open"}, {
 	on_pull_item = function(pos, side)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.get_item(inv, "main")
+		return tubelib.get_item(meta, "main")
 	end,
 	on_push_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "main", item)
+		return tubelib.put_item(meta, "main", item)
 	end,
 	on_unpull_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "main", item)
+		return tubelib.put_item(meta, "main", item)
 	end,
 	on_recv_message = function(pos, topic, payload)
 		if topic == "state" then
@@ -49,18 +46,15 @@ tubelib.register_node("default:chest", {"default:chest_open"}, {
 tubelib.register_node("default:chest_locked", {"default:chest_locked_open"}, {
 	on_pull_item = function(pos, side)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.get_item(inv, "main")
+		return tubelib.get_item(meta, "main")
 	end,
 	on_push_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "main", item)
+		return tubelib.put_item(meta, "main", item)
 	end,
 	on_unpull_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "main", item)
+		return tubelib.put_item(meta, "main", item)
 	end,
 	on_recv_message = function(pos, topic, payload)
 		if topic == "state" then
@@ -100,22 +94,20 @@ local FuelTbl = {
 tubelib.register_node("default:furnace", {"default:furnace_active"}, {
 	on_pull_item = function(pos, side)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.get_item(inv, "dst")
+		return tubelib.get_item(meta, "dst")
 	end,
 	on_push_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		if FuelTbl[items:get_name()] == true then
-			return tubelib.put_item(inv, "fuel", items)
+		minetest.get_node_timer(pos):start(1.0)
+		if FuelTbl[item:get_name()] == true then
+			return tubelib.put_item(meta, "fuel", item)
 		else
-			return tubelib.put_item(inv, "src", items)
+			return tubelib.put_item(meta, "src", item)
 		end
 	end,
 	on_unpull_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "dst", item)
+		return tubelib.put_item(meta, "dst", item)
 	end,
 	on_recv_message = function(pos, topic, payload)
 		if topic == "state" then

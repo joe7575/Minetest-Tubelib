@@ -49,24 +49,20 @@ local function switch_off(pos, node)
 end	
 
 local function keep_running(pos, elapsed)
-	local t = minetest.get_us_time()
 	local meta = minetest.get_meta(pos)
-	--local number = meta:get_string("number")
+	local number = meta:get_string("number")
 	local items = tubelib.pull_items(pos, "L")								-- <<=== tubelib
 	if items ~= nil then
 		if tubelib.push_items(pos, "R", items) == false then				-- <<=== tubelib
 			-- place item back
 			tubelib.unpull_items(pos, "L", items)							-- <<=== tubelib
-			--meta:set_string("infotext", "Pusher "..number..": blocked")
-		--else
-			--meta:set_string("infotext", "Pusher "..number..": running")
-			
+			meta:set_string("infotext", "Pusher "..number..": blocked")
+		else
+			meta:set_string("infotext", "Pusher "..number..": running")
 		end
 	else
 		meta:set_string("infotext", "Pusher "..number..": unloaded")
 	end
-	t = minetest.get_us_time() - t
-	print("keep_running:", t)
 	return true
 end
 

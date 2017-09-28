@@ -385,30 +385,32 @@ end
 -------------------------------------------------------------------
 
 -- Get one item from the given ItemList. The position within the list
--- is randomly selected so that different items stack will be considered.
+-- is incremented each time so that different item stacks will be considered.
 -- Returns nil if ItemList is empty.
-function tubelib.get_item(inv, listname)
+function tubelib.get_item(meta, listname)
+	local inv = meta:get_inventory()
 	if inv:is_empty(listname) then
 		return nil
 	end
-	local stack, slot
+	local startpos = meta:get_int("tubelib_startpos") or 1
 	local size = inv:get_size(listname)
-	local offs = math.random(size)
-	for idx = 1, size do
-		local slot = ((idx + offs) % size) + 1
-		local items = inv:get_stack(listname, slot)
+	for idx = startpos, size do
+		local items = inv:get_stack(listname, idx)
 		if items:get_count() > 0 then
 			local taken = items:take_item(1)
-			inv:set_stack(listname, slot, items)
+			inv:set_stack(listname, idx, items)
+			meta:set_int("tubelib_startpos", idx + 1)
 			return taken
 		end
 	end
+	meta:set_int("tubelib_startpos", 1)
 	return nil
 end
 
 -- Get one item from the given ItemList, specified by stack number (1..n).
 -- Returns nil if ItemList is empty.
-function tubelib.get_this_item(inv, listname, number)
+function tubelib.get_this_item(meta, listname, number)
+	local inv = meta:get_inventory()
 	if inv:is_empty(listname) then
 		return nil
 	end
@@ -425,7 +427,8 @@ end
 
 -- Put the given item into the given ItemList.
 -- Function returns false if ItemList is full.
-function tubelib.put_item(inv, listname, item)
+function tubelib.put_item(meta, listname, item)
+	local inv = meta:get_inventory()
 	if inv:room_for_item(listname, item) then
 		inv:add_item(listname, item)
 		return true
@@ -435,7 +438,8 @@ end
 
 -- Get the number of items from the given ItemList.
 -- Returns nil if the number is not available.
-function tubelib.get_num_items(inv, listname, num)
+function tubelib.get_num_items(meta, listname, num)
+	local inv = meta:get_inventory()
 	if inv:is_empty(listname) then
 		return nil
 	end
