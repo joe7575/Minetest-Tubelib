@@ -85,6 +85,8 @@ minetest.register_node("tubelib:button", {
 		if tubelib.check_numbers(fields.number) then							-- <<=== tubelib
 			meta:set_string("number", fields.number)
 			meta:set_string("infotext", "Tubelib Button, connected with block "..fields.number)
+		else
+			return
 		end
 		if fields.public then
 			meta:set_string("public", fields.public)

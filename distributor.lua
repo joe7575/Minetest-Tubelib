@@ -18,6 +18,9 @@
 	 - topic = "state", payload  = nil, response is "running" or "stopped"
 ]]--
 
+local NUM_FILTER_ELEM = 6
+local NUM_FILTER_SLOTS = 4
+
 -- Return a key/value table with all items and the corresponding stack numbers
 local function invlist_content_as_kvlist(list)
 	local res = {}
@@ -67,7 +70,7 @@ end
 
 
 local function distributor_formspec(state, filter)
-	return "size[8,8.5]"..
+	return "size[10,8.5]"..
 	default.gui_bg..
 	default.gui_bg_img..
 	default.gui_slots..
@@ -82,11 +85,11 @@ local function distributor_formspec(state, filter)
 	"image[3.6,1;0.3,1;tubelib_green.png]"..
 	"image[3.6,2;0.3,1;tubelib_blue.png]"..
 	"image[3.6,3;0.3,1;tubelib_yellow.png]"..
-	"list[context;red;4,0;4,1;]"..
-	"list[context;green;4,1;4,1;]"..
-	"list[context;blue;4,2;4,1;]"..
-	"list[context;yellow;4,3;4,1;]"..
-	"list[current_player;main;0,4.5;8,4;]"..
+	"list[context;red;4,0;6,1;]"..
+	"list[context;green;4,1;6,1;]"..
+	"list[context;blue;4,2;6,1;]"..
+	"list[context;yellow;4,3;6,1;]"..
+	"list[current_player;main;1,4.5;8,4;]"..
 	"listring[context;src]"..
 	"listring[current_player;main]"
 end
@@ -101,7 +104,7 @@ local function allow_metadata_inventory_put(pos, listname, index, stack, player)
 	end
 	if listname == "src" then
 		return stack:get_count()
-	elseif invlist_num_entries(list) < 4 then
+	elseif invlist_num_entries(list) < NUM_FILTER_ELEM then
 		return 1
 	else
 		return 0
@@ -123,7 +126,7 @@ local function allow_metadata_inventory_move(pos, from_list, from_index, to_list
 end
 
 local SlotColors = {"red", "green", "blue", "yellow"}
-local Num2Ascii = {"F", "L", "B", "R"}		-- color to side translation
+local Num2Ascii = {"B", "L", "F", "R"}		-- color to side translation
 local FilterCache = {}						-- local cache for filter settings
 
 local function filter_settings(pos)
@@ -192,7 +195,7 @@ local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local facedir = meta:get_int("facedir")
 	local slot_idx = meta:get_int("slot_idx") or 1
-	meta:set_int("slot_idx", (slot_idx + 1) % 4)
+	meta:set_int("slot_idx", (slot_idx + 1) % NUM_FILTER_SLOTS)
 	local side = Num2Ascii[slot_idx+1]
 	local listname = SlotColors[slot_idx+1]
 	local inv = meta:get_inventory()
@@ -220,10 +223,10 @@ local function keep_running(pos, elapsed)
 	if next(names) then
 		for _,name in ipairs(names) do
 			if kvSrc[name] then
-				local item = tubelib.get_this_item(inv, "src", kvSrc[name])		-- <<=== tubelib
+				local item = tubelib.get_this_item(meta, "src", kvSrc[name])	-- <<=== tubelib
 				if item then
-					if not tubelib.push_items(pos, facedir, side, item) then	-- <<=== tubelib
-						tubelib.put_item(inv, "src", item)
+					if not tubelib.push_items(pos, side, item) then				-- <<=== tubelib
+						tubelib.put_item(mneta, "src", item)
 					end
 				end
 			end
@@ -234,10 +237,10 @@ local function keep_running(pos, elapsed)
 	if next(names) == nil then
 		for name,_ in pairs(kvSrc) do
 			if kvFilterItemNames[name] == nil then  -- not in the filter so far?
-				local item = tubelib.get_this_item(inv, "src", kvSrc[name])			-- <<=== tubelib
+				local item = tubelib.get_this_item(meta, "src", kvSrc[name])		-- <<=== tubelib
 				if item then
-					if not tubelib.push_items(pos, facedir, side, item) then		-- <<=== tubelib
-						tubelib.put_item(inv, "src", item)
+					if not tubelib.push_items(pos, side, item) then					-- <<=== tubelib
+						tubelib.put_item(meta, "src", item)
 					end
 				end
 			end
@@ -290,7 +293,7 @@ minetest.register_node("tubelib:distributor", {
 	},
 
 	after_place_node = function(pos, placer)
-		local number = tubelib.get_node_number(pos, "tubelib:distributor")		-- <<=== tubelib
+		local number = tubelib.add_node(pos, "tubelib:distributor")			-- <<=== tubelib
 		local meta = minetest.get_meta(pos)
 		local facedir = minetest.dir_to_facedir(placer:get_look_dir(), false)
 		local placer_name = placer:get_player_name()
@@ -304,10 +307,10 @@ minetest.register_node("tubelib:distributor", {
 		meta:set_int("facedir", facedir)
 		local inv = meta:get_inventory()
 		inv:set_size('src', 8)
-		inv:set_size('yellow', 4)
-		inv:set_size('green', 4)
-		inv:set_size('red', 4)
-		inv:set_size('blue', 4)
+		inv:set_size('yellow', 6)
+		inv:set_size('green', 6)
+		inv:set_size('red', 6)
+		inv:set_size('blue', 6)
 	end,
 
 	on_receive_fields = on_receive_fields,
@@ -382,18 +385,15 @@ minetest.register_craft({
 tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 	on_pull_item = function(pos, side)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.get_item(inv, "src")
+		return tubelib.get_item(meta, "src")
 	end,
 	on_push_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "src", item)
+		return tubelib.put_item(meta, "src", item)
 	end,
 	on_unpull_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
-		local inv = meta:get_inventory()
-		return tubelib.put_item(inv, "src", item)
+		return tubelib.put_item(meta, "src", item)
 	end,
 	on_recv_message = function(pos, topic, payload)
 		if topic == "start" then
