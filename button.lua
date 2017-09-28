@@ -10,9 +10,9 @@
 
 	button.lua:
 	
-	Example of a "client" node, only sending messages to others.
-	This is a real client which does not claim a position number nore
-	providing any server API.
+	Example of a simple communication node, only sending messages to other nodes.
+	This node does not claim a position number via "add_node()", 
+	nore providing any server API.
 
 ]]--
 

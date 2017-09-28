@@ -9,13 +9,24 @@
 	See LICENSE.txt for more information
 
 	pusher.lua:
+	
 	Simple node for push/pull operation of StackItems from chests or other
 	inventory/server nodes to tubes or other inventory/server nodes.
+	
 	The Pusher supports the following messages:
 	 - topic = "start", payload  = nil
-	 - topic = "stop" , payload  = nil
+	 - topic = "stop", payload  = nil
+	 - topic = "state", payload  = nil, response is "running", "stopped", or "not supported"
 
 ]]--
+
+--                 +--------+
+--                /        /|
+--               +--------+ |
+--     IN (L) <--|        |x--> OUT (R)
+--               | PUSHER | +
+--               |        |/
+--               +--------+
 
 local function switch_on(pos, node)
 	local meta = minetest.get_meta(pos)
@@ -37,23 +48,25 @@ local function switch_off(pos, node)
 	minetest.get_node_timer(pos):stop()
 end	
 
-
 local function keep_running(pos, elapsed)
+	local t = minetest.get_us_time()
 	local meta = minetest.get_meta(pos)
-	local number = meta:get_string("number")
-	local facedir = meta:get_int("facedir")
-	local items = tubelib.pull_items(pos, facedir, "L")						-- <<=== tubelib
+	--local number = meta:get_string("number")
+	local items = tubelib.pull_items(pos, "L")								-- <<=== tubelib
 	if items ~= nil then
-		if tubelib.push_items(pos, facedir, "R", items) == false then		-- <<=== tubelib
+		if tubelib.push_items(pos, "R", items) == false then				-- <<=== tubelib
 			-- place item back
-			tubelib.push_items(pos, facedir, "L", items)					-- <<=== tubelib
-			meta:set_string("infotext", "Pusher "..number..": blocked")
-		else
-			meta:set_string("infotext", "Pusher "..number..": running")
+			tubelib.unpull_items(pos, "L", items)							-- <<=== tubelib
+			--meta:set_string("infotext", "Pusher "..number..": blocked")
+		--else
+			--meta:set_string("infotext", "Pusher "..number..": running")
+			
 		end
 	else
 		meta:set_string("infotext", "Pusher "..number..": unloaded")
 	end
+	t = minetest.get_us_time() - t
+	print("keep_running:", t)
 	return true
 end
 
@@ -71,9 +84,7 @@ minetest.register_node("tubelib:pusher", {
 
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
-		local number = tubelib.get_node_number(pos, "tubelib:pusher")			-- <<=== tubelib
-		local facedir = minetest.dir_to_facedir(placer:get_look_dir(), false)
-		meta:set_int("facedir", facedir)
+		local number = tubelib.add_node(pos, "tubelib:pusher")					-- <<=== tubelib
 		meta:set_string("number", number)
 		meta:set_string("infotext", "Pusher "..number..": stopped")
 	end,
@@ -166,14 +177,25 @@ minetest.register_craft({
 
 --------------------------------------------------------------- tubelib
 tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
-	on_pull_item = nil,
-	on_push_item = nil,
+	on_pull_item = nil,  		-- pusher has no inventory
+	on_push_item = nil,			-- pusher has no inventory
+	on_unpull_item = nil,		-- pusher has no inventory
+	
 	on_recv_message = function(pos, topic, payload)
 		local node = minetest.get_node(pos)
 		if topic == "start" then
-			switch_on(pos, node)
+			return switch_on(pos, node)
 		elseif topic == "stop" then
-			switch_off(pos, node)
+			return switch_off(pos, node)
+		elseif topic == "state" then
+			local meta = minetest.get_meta(pos)
+			if meta:get_int("running") == 1 then
+				return "running"
+			else
+				return "stopped"
+			end
+		else
+			return "not supported"
 		end
 	end,
 })	

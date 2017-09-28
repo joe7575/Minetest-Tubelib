@@ -10,7 +10,7 @@
 
 	lamp.lua:
 	
-	Example of a "server" node, only receiving messages from others.
+	Example of a simple communication node, only receiving messages from others.
 	This node claims a position number and registers its message interface.
 	The Lamp supports the following messages:
 	 - topic = "start", payload  = nil
@@ -35,7 +35,7 @@ minetest.register_node("tubelib:lamp", {
 	},
 
 	after_place_node = function(pos, placer)
-		local number = tubelib.get_node_number(pos, "tubelib:lamp")		-- <<=== tubelib
+		local number = tubelib.add_node(pos, "tubelib:lamp")			-- <<=== tubelib
 		local meta = minetest.get_meta(pos)
 		meta:set_string("infotext", "Tubelib Lamp "..number)
 	end,
@@ -85,8 +85,9 @@ minetest.register_craft({
 
 --------------------------------------------------------------- tubelib
 tubelib.register_node("tubelib:lamp", {"tubelib:lamp_on"}, {
-	on_pull_item = nil,
-	on_push_item = nil,
+	on_pull_item = nil,			-- lamp has no inventory
+	on_push_item = nil,			-- lamp has no inventory
+	on_unpull_item = nil,		-- lamp has no inventory
 	on_recv_message = function(pos, topic, payload)
 		local node = minetest.get_node(pos)
 		if topic == "start" then
