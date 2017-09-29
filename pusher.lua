@@ -16,7 +16,8 @@
 	The Pusher supports the following messages:
 	 - topic = "start", payload  = nil
 	 - topic = "stop", payload  = nil
-	 - topic = "state", payload  = nil, response is "running", "stopped", or "not supported"
+	 - topic = "state", payload  = nil, 
+	   response is "running", "stopped", "standby", or "not supported"
 
 ]]--
 
@@ -28,14 +29,17 @@
 --               |        |/
 --               +--------+
 
+local SLEEP_CNT_START_VAL = 10 
+
 local function switch_on(pos, node)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", 1)
+	meta:set_int("running", SLEEP_CNT_START_VAL)
 	meta:set_string("infotext", "Pusher "..number..": running")
 	node.name = "tubelib:pusher_active"
 	minetest.swap_node(pos, node)
 	minetest.get_node_timer(pos):start(2)
+	return false
 end	
 
 local function switch_off(pos, node)
@@ -46,13 +50,33 @@ local function switch_off(pos, node)
 	node.name = "tubelib:pusher"
 	minetest.swap_node(pos, node)
 	minetest.get_node_timer(pos):stop()
+	return false
+end	
+
+local function goto_sleep(pos, node)
+	local meta = minetest.get_meta(pos)
+	local number = meta:get_string("number")
+	meta:set_int("running", 0)
+	meta:set_string("infotext", "Pusher "..number..": standby")
+	node.name = "tubelib:pusher"
+	minetest.swap_node(pos, node)
+	minetest.get_node_timer(pos):start(20)
+	return false
 end	
 
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
+	local running = meta:get_int("running") - 1
+	--print("running", running)
 	local items = tubelib.pull_items(pos, "L")								-- <<=== tubelib
 	if items ~= nil then
+		if running <= 0 then
+			local node = minetest.get_node(pos)
+			return switch_on(pos, node)
+		else
+			running = SLEEP_CNT_START_VAL
+		end
 		if tubelib.push_items(pos, "R", items) == false then				-- <<=== tubelib
 			-- place item back
 			tubelib.unpull_items(pos, "L", items)							-- <<=== tubelib
@@ -61,8 +85,12 @@ local function keep_running(pos, elapsed)
 			meta:set_string("infotext", "Pusher "..number..": running")
 		end
 	else
-		meta:set_string("infotext", "Pusher "..number..": unloaded")
+		if running <= 0 then
+			local node = minetest.get_node(pos)
+			return goto_sleep(pos, node)
+		end
 	end
+	meta:set_int("running", running)
 	return true
 end
 
@@ -94,6 +122,8 @@ minetest.register_node("tubelib:pusher", {
 	after_dig_node = function(pos)
 		tubelib.remove_node(pos)												-- <<=== tubelib
 	end,
+	
+	on_timer = keep_running,
 
 	paramtype2 = "facedir",
 	groups = {cracky=1},
@@ -185,8 +215,11 @@ tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
 			return switch_off(pos, node)
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
-			if meta:get_int("running") == 1 then
+			local running = meta:get_int("running")
+			if running > 0 then
 				return "running"
+			elseif running < 0 then
+				return "standby"
 			else
 				return "stopped"
 			end

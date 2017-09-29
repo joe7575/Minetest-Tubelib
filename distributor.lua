@@ -15,11 +15,13 @@
 	The Distributor supports the following messages:
 	 - topic = "start", payload  = nil
 	 - topic = "stop" , payload  = nil
-	 - topic = "state", payload  = nil, response is "running" or "stopped"
+	 - topic = "state", payload  = nil, 
+	   response is "running", "stopped", "standby", or "not supported"
 ]]--
 
 local NUM_FILTER_ELEM = 6
 local NUM_FILTER_SLOTS = 4
+local SLEEP_CNT_START_VAL = 5
 
 -- Return a key/value table with all items and the corresponding stack numbers
 local function invlist_content_as_kvlist(list)
@@ -155,45 +157,66 @@ local function filter_settings(pos)
 	}
 end
 
-local function start_the_machine(pos)
-	local meta = minetest.get_meta(pos)
-	if meta:get_int("state") ~= tubelib.RUNNING then
-		local node = minetest.get_node(pos)
-		node.name = "tubelib:distributor_active"
-		minetest.swap_node(pos, node)
-		minetest.get_node_timer(pos):start(2)
-		meta:set_int("state", tubelib.RUNNING)
-		local number = meta:get_string("number")
-		meta:set_string("infotext", "Tubelib Distributor "..number..": running")
-		local filter = minetest.deserialize(meta:get_string("filter"))
-		meta:set_string("formspec", distributor_formspec(tubelib.RUNNING, filter))
-		return true
+-- states of the machine
+local function state(running)
+	if running > 0 then
+		return tubelib.RUNNING
+	elseif running == 0 then
+		return tubelib.STOPPED
+	elseif running == -1 then
+		return tubelib.STANDBY
+	else
+		return tubelib.FAULT
 	end
+end
+
+local function start_the_machine(pos)
+	local node = minetest.get_node(pos)
+	local meta = minetest.get_meta(pos)
+	local number = meta:get_string("number")
+	meta:set_int("running", SLEEP_CNT_START_VAL)
+	node.name = "tubelib:distributor_active"
+	minetest.swap_node(pos, node)
+	meta:set_string("infotext", "Tubelib Distributor "..number..": running")
+	local filter = minetest.deserialize(meta:get_string("filter"))
+	meta:set_string("formspec", distributor_formspec(tubelib.RUNNING, filter))
+	minetest.get_node_timer(pos):start(2)
 	return false
 end
 
 local function stop_the_machine(pos)
+	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
-	if meta:get_int("state") ~= tubelib.STOPPED then
-		local node = minetest.get_node(pos)
-		node.name = "tubelib:distributor"
-		minetest.swap_node(pos, node)
-		minetest.get_node_timer(pos):stop()
-		meta:set_int("state", tubelib.STOPPED)
-		local number = meta:get_string("number")
-		meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
-		local filter = minetest.deserialize(meta:get_string("filter"))
-		meta:set_string("formspec", distributor_formspec(tubelib.STOPPED, filter))
-		return true
-	end
+	local number = meta:get_string("number")
+	meta:set_int("running", 0)
+	node.name = "tubelib:distributor"
+	minetest.swap_node(pos, node)
+	meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
+	local filter = minetest.deserialize(meta:get_string("filter"))
+	meta:set_string("formspec", distributor_formspec(tubelib.STOPPED, filter))
+	minetest.get_node_timer(pos):stop()
 	return false
 end
 
+local function goto_sleep(pos)
+	local node = minetest.get_node(pos)
+	local meta = minetest.get_meta(pos)
+	local number = meta:get_string("number")
+	meta:set_int("running", -1)
+	node.name = "tubelib:distributor"
+	minetest.swap_node(pos, node)
+	meta:set_string("infotext", "Tubelib Distributor "..number..": standby")
+	local filter = minetest.deserialize(meta:get_string("filter"))
+	meta:set_string("formspec", distributor_formspec(tubelib.STANDBY, filter))
+	minetest.get_node_timer(pos):start(10)
+	return false
+end	
 
 -- move items to the output slots
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local facedir = meta:get_int("facedir")
+	local running = meta:get_int("running") - 1
 	local slot_idx = meta:get_int("slot_idx") or 1
 	meta:set_int("slot_idx", (slot_idx + 1) % NUM_FILTER_SLOTS)
 	local side = Num2Ascii[slot_idx+1]
@@ -215,10 +238,11 @@ local function keep_running(pos, elapsed)
 	local names = FilterCache[hash].kvSide2ItemNames[side]
 	
 	if names == nil then
-		-- filter closed
+		-- this slot is empty
 		return true
 	end
 	
+	local busy = false
 	-- move items from configured filters to the output
 	if next(names) then
 		for _,name in ipairs(names) do
@@ -226,7 +250,9 @@ local function keep_running(pos, elapsed)
 				local item = tubelib.get_this_item(meta, "src", kvSrc[name])	-- <<=== tubelib
 				if item then
 					if not tubelib.push_items(pos, side, item) then				-- <<=== tubelib
-						tubelib.put_item(mneta, "src", item)
+						tubelib.put_item(meta, "src", item)
+					else
+						busy = true
 					end
 				end
 			end
@@ -241,11 +267,27 @@ local function keep_running(pos, elapsed)
 				if item then
 					if not tubelib.push_items(pos, side, item) then					-- <<=== tubelib
 						tubelib.put_item(meta, "src", item)
+					else
+						busy = true
 					end
 				end
 			end
 		end
 	end
+	
+	if busy == true then 
+		if running <= 0 then
+			return start_the_machine(pos)
+		else
+			running = SLEEP_CNT_START_VAL
+		end
+	else
+		if running <= 0 then
+			return goto_sleep(pos)
+		end
+	end
+	
+	meta:set_int("running", running)
 	return true
 end
 
@@ -254,6 +296,7 @@ local function on_receive_fields(pos, formname, fields, player)
 		return
 	end
 	local meta = minetest.get_meta(pos)
+	local running = meta:get_int("running")
 	local filter = minetest.deserialize(meta:get_string("filter"))
 	if fields.filter1 ~= nil then
 		filter[1] = fields.filter1 == "true"
@@ -268,15 +311,14 @@ local function on_receive_fields(pos, formname, fields, player)
 	
 	filter_settings(pos)
 	
-	local state = meta:get_int("state") or 1
 	if fields.button ~= nil then
-		if state ~= tubelib.STOPPED then
+		if running > 0 then
 			stop_the_machine(pos)
 		else
 			start_the_machine(pos)
 		end
 	else
-		meta:set_string("formspec", distributor_formspec(state, filter))
+		meta:set_string("formspec", distributor_formspec(state(running), filter))
 	end
 end
 
@@ -299,7 +341,6 @@ minetest.register_node("tubelib:distributor", {
 		local placer_name = placer:get_player_name()
 
 		local filter = {false,false,false,false}
-		meta:set_int("state", tubelib.STOPPED)
 		meta:set_string("formspec", distributor_formspec(tubelib.STOPPED, filter))
 		meta:set_string("filter", minetest.serialize(filter))
 		meta:set_string("number", number)
@@ -331,6 +372,8 @@ minetest.register_node("tubelib:distributor", {
 	allow_metadata_inventory_take = allow_metadata_inventory_take,
 	allow_metadata_inventory_move = allow_metadata_inventory_move,
 
+	on_timer = keep_running,
+	
 	paramtype2 = "facedir",
 	groups = {cracky=1},
 	is_ground_content = false,
@@ -402,8 +445,14 @@ tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 			return stop_the_machine(pos)
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
-			local state = meta:get_int("state")
-			return libelib.state_string(state)
+			local running = meta:get_int("running")
+			if running > 0 then
+				return "running"
+			elseif running < 0 then
+				return "standby"
+			else
+				return "stopped"
+			end
 		else
 			return "unsupported"
 		end
@@ -422,7 +471,6 @@ minetest.register_lbm({
 		if minetest.deserialize(meta:get_string("filter")) == nil then
 			local filter = {false,false,false,false}
 			meta:set_string("filter", minetest.serialize(filter))
-			meta:set_int("state", tubelib.STOPPED)
 			meta:set_string("formspec", distributor_formspec(tubelib.STOPPED, filter))
 		end
 	end

@@ -392,18 +392,19 @@ function tubelib.get_item(meta, listname)
 	if inv:is_empty(listname) then
 		return nil
 	end
-	local startpos = meta:get_int("tubelib_startpos") or 1
 	local size = inv:get_size(listname)
-	for idx = startpos, size do
+	local startpos = meta:get_int("tubelib_startpos") or 0
+	for idx = startpos, startpos+size do
+		idx = (idx % size) + 1
 		local items = inv:get_stack(listname, idx)
 		if items:get_count() > 0 then
 			local taken = items:take_item(1)
 			inv:set_stack(listname, idx, items)
-			meta:set_int("tubelib_startpos", idx + 1)
+			meta:set_int("tubelib_startpos", idx)
 			return taken
 		end
 	end
-	meta:set_int("tubelib_startpos", 1)
+	meta:set_int("tubelib_startpos", 0)
 	return nil
 end
 
