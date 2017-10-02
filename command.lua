@@ -388,6 +388,7 @@ end
 -- is incremented each time so that different item stacks will be considered.
 -- Returns nil if ItemList is empty.
 function tubelib.get_item(meta, listname)
+	if meta == nil or meta.get_inventory == nil then return nil end
 	local inv = meta:get_inventory()
 	if inv:is_empty(listname) then
 		return nil
@@ -411,6 +412,7 @@ end
 -- Get one item from the given ItemList, specified by stack number (1..n).
 -- Returns nil if ItemList is empty.
 function tubelib.get_this_item(meta, listname, number)
+	if meta == nil or meta.get_inventory == nil then return nil end
 	local inv = meta:get_inventory()
 	if inv:is_empty(listname) then
 		return nil
@@ -429,6 +431,7 @@ end
 -- Put the given item into the given ItemList.
 -- Function returns false if ItemList is full.
 function tubelib.put_item(meta, listname, item)
+	if meta == nil or meta.get_inventory == nil then return false end
 	local inv = meta:get_inventory()
 	if inv:room_for_item(listname, item) then
 		inv:add_item(listname, item)
@@ -440,6 +443,7 @@ end
 -- Get the number of items from the given ItemList.
 -- Returns nil if the number is not available.
 function tubelib.get_num_items(meta, listname, num)
+	if meta == nil or meta.get_inventory == nil then return nil end
 	local inv = meta:get_inventory()
 	if inv:is_empty(listname) then
 		return nil

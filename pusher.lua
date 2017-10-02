@@ -80,9 +80,8 @@ local function keep_running(pos, elapsed)
 		if tubelib.push_items(pos, "R", items) == false then				-- <<=== tubelib
 			-- place item back
 			tubelib.unpull_items(pos, "L", items)							-- <<=== tubelib
-			meta:set_string("infotext", "Pusher "..number..": blocked")
-		else
-			meta:set_string("infotext", "Pusher "..number..": running")
+			local node = minetest.get_node(pos)
+			return goto_sleep(pos, node)
 		end
 	else
 		if running <= 0 then

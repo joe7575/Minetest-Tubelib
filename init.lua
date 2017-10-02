@@ -21,6 +21,27 @@ tubelib = {
 	NodeDef = {},		-- node registration info
 }
 
+--------------------------- conversion to v0.04
+minetest.register_lbm({
+	label = "[Tubelib] Distributor update",
+	name = "tubelib:update",
+	nodenames = {"tubelib:distributor", "tubelib:distributor_active"},
+	run_at_every_load = false,
+	action = function(pos, node)
+		local meta = minetest.get_meta(pos)
+		if minetest.deserialize(meta:get_string("filter")) == nil then
+			local filter = {false,false,false,false}
+			meta:set_string("filter", minetest.serialize(filter))
+		end
+		local inv = meta:get_inventory()
+		inv:set_size('yellow', 6)
+		inv:set_size('green', 6)
+		inv:set_size('red', 6)
+		inv:set_size('blue', 6)
+	end
+})
+
+
 
 dofile(minetest.get_modpath("tubelib") .. "/tubes.lua")
 dofile(minetest.get_modpath("tubelib") .. "/command.lua")

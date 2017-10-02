@@ -441,19 +441,3 @@ tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 	end,
 })	
 --------------------------------------------------------------- tubelib
-
---------------------------- conversion to v2
-minetest.register_lbm({
-	label = "[Tubelib] Distributor update",
-	name = "tubelib:update",
-	nodenames = {"tubelib:distributor", "tubelib:distributor_active"},
-	run_at_every_load = false,
-	action = function(pos, node)
-		local meta = minetest.get_meta(pos)
-		if minetest.deserialize(meta:get_string("filter")) == nil then
-			local filter = {false,false,false,false}
-			meta:set_string("filter", minetest.serialize(filter))
-			meta:set_string("formspec", distributor_formspec(tubelib.STOPPED, filter))
-		end
-	end
-})
