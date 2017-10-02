@@ -16,8 +16,8 @@ The mod provides:
 - a Lamp block as receiving example for message communication
 - support for default blocks: furnace and chests
 
-Hints for Admins: ![GitHub](https://github.com/joe7575/Minetest-Tubelib/blob/master/manual.md)
-Programmers Manual: ![GitHub](https://github.com/joe7575/Minetest-Tubelib/blob/master/api.md)
+Hints for Admins: ![manual.md](https://github.com/joe7575/Minetest-Tubelib/blob/master/manual.md)  
+Programmers Manual: ![api.md](https://github.com/joe7575/Minetest-Tubelib/blob/master/api.md)
 
 Browse on: ![GitHub](https://github.com/joe7575/Minetest-Tubelib)
 
