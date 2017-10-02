@@ -216,13 +216,7 @@ tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
 			local running = meta:get_int("running")
-			if running > 0 then
-				return "running"
-			elseif running < 0 then
-				return "standby"
-			else
-				return "stopped"
-			end
+			return tubelib.statestring(runnnig)
 		else
 			return "not supported"
 		end

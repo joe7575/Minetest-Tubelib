@@ -12,7 +12,8 @@
 	
 	Simple node which lets all items disappear.
 	The blackhole supports the following message:
-	- topic = "status", payload  = nil, response is the number of disappeared items (0..n)
+	- topic = "status", payload  = nil, 
+	  response is the number of disappeared items (0..n)
 ]]--
 
 --                 +--------+
@@ -39,8 +40,6 @@ minetest.register_node("tubelib:blackhole", {
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
 		local number = tubelib.add_node(pos, "tubelib:blackhole")				-- <<=== tubelib
-		local facedir = minetest.dir_to_facedir(placer:get_look_dir(), false)
-		meta:set_int("facedir", facedir)
 		meta:set_string("number", number)
 		meta:set_int("disappeared", 0)
 		meta:set_string("infotext","0 items disappeared")

@@ -21,7 +21,7 @@
 
 local NUM_FILTER_ELEM = 6
 local NUM_FILTER_SLOTS = 4
-local SLEEP_CNT_START_VAL = 5
+local TICKS_TO_SLEEP = 5
 
 -- Return a key/value table with all items and the corresponding stack numbers
 local function invlist_content_as_kvlist(list)
@@ -77,7 +77,7 @@ local function distributor_formspec(state, filter)
 	default.gui_bg_img..
 	default.gui_slots..
 	"list[context;src;0,0;2,4;]"..
-	"image[2,1.5;1,1;gui_furnace_arrow_bg.png^[transformR270]"..
+	"image[2,1.5;1,1;tubelib_gui_arrow.png]"..
 	"image_button[2,3;1,1;".. tubelib.state_button(state) ..";button;]"..
 	"checkbox[3,0;filter1;On;"..dump(filter[1]).."]"..
 	"checkbox[3,1;filter2;On;"..dump(filter[2]).."]"..
@@ -135,7 +135,6 @@ local function filter_settings(pos)
 	local hash = minetest.hash_node_position(pos)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
-	local facedir = meta:get_int("facedir")
 	local filter = minetest.deserialize(meta:get_string("filter")) or {false,false,false,false}
 	local kvFilterItemNames = {}  	-- {<item:name> = true,...}
 	local kvSide2ItemNames = {}		-- {"F" = {<item:name>,...},...}
@@ -157,24 +156,11 @@ local function filter_settings(pos)
 	}
 end
 
--- states of the machine
-local function state(running)
-	if running > 0 then
-		return tubelib.RUNNING
-	elseif running == 0 then
-		return tubelib.STOPPED
-	elseif running == -1 then
-		return tubelib.STANDBY
-	else
-		return tubelib.FAULT
-	end
-end
-
 local function start_the_machine(pos)
 	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", SLEEP_CNT_START_VAL)
+	meta:set_int("running", TICKS_TO_SLEEP)
 	node.name = "tubelib:distributor_active"
 	minetest.swap_node(pos, node)
 	meta:set_string("infotext", "Tubelib Distributor "..number..": running")
@@ -215,8 +201,8 @@ end
 -- move items to the output slots
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
-	local facedir = meta:get_int("facedir")
 	local running = meta:get_int("running") - 1
+	--print("running", running)
 	local slot_idx = meta:get_int("slot_idx") or 1
 	meta:set_int("slot_idx", (slot_idx + 1) % NUM_FILTER_SLOTS)
 	local side = Num2Ascii[slot_idx+1]
@@ -279,7 +265,7 @@ local function keep_running(pos, elapsed)
 		if running <= 0 then
 			return start_the_machine(pos)
 		else
-			running = SLEEP_CNT_START_VAL
+			running = TICKS_TO_SLEEP
 		end
 	else
 		if running <= 0 then
@@ -318,7 +304,7 @@ local function on_receive_fields(pos, formname, fields, player)
 			start_the_machine(pos)
 		end
 	else
-		meta:set_string("formspec", distributor_formspec(state(running), filter))
+		meta:set_string("formspec", distributor_formspec(tubelib.state(running), filter))
 	end
 end
 
@@ -337,7 +323,6 @@ minetest.register_node("tubelib:distributor", {
 	after_place_node = function(pos, placer)
 		local number = tubelib.add_node(pos, "tubelib:distributor")			-- <<=== tubelib
 		local meta = minetest.get_meta(pos)
-		local facedir = minetest.dir_to_facedir(placer:get_look_dir(), false)
 		local placer_name = placer:get_player_name()
 
 		local filter = {false,false,false,false}
@@ -345,7 +330,6 @@ minetest.register_node("tubelib:distributor", {
 		meta:set_string("filter", minetest.serialize(filter))
 		meta:set_string("number", number)
 		meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
-		meta:set_int("facedir", facedir)
 		local inv = meta:get_inventory()
 		inv:set_size('src', 8)
 		inv:set_size('yellow', 6)
@@ -446,13 +430,7 @@ tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
 			local running = meta:get_int("running")
-			if running > 0 then
-				return "running"
-			elseif running < 0 then
-				return "standby"
-			else
-				return "stopped"
-			end
+			return tubelib.statestring(runnnig)
 		else
 			return "unsupported"
 		end

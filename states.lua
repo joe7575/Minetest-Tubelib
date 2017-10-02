@@ -34,3 +34,28 @@ function tubelib.state_button(state)
 	return tubelib.StatesImg[tubelib.FAULT]
 end
 			
+-- Return machine state based on the running counter
+function tubelib.state(running)
+	if running > 0 then
+		return tubelib.RUNNING
+	elseif running == 0 then
+		return tubelib.STOPPED
+	elseif running == -1 then
+		return tubelib.STANDBY
+	else
+		return tubelib.FAULT
+	end
+end
+
+-- Return state string based on the running counter
+function tubelib.statestring(running)
+	if running > 0 then
+		return "running"
+	elseif running == 0 then
+		return "stopped"
+	elseif running == -1 then
+		return "standby"
+	else
+		return "fault"
+	end
+end
