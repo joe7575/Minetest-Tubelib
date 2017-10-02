@@ -22,6 +22,10 @@
 local NUM_FILTER_ELEM = 6
 local NUM_FILTER_SLOTS = 4
 local TICKS_TO_SLEEP = 5
+local CYCLE_TIME = 2
+local STOP_STATE = 0
+local STANDBY_STATE = -1
+local FAULT_STATE = -2
 
 -- Return a key/value table with all items and the corresponding stack numbers
 local function invlist_content_as_kvlist(list)
@@ -166,7 +170,7 @@ local function start_the_machine(pos)
 	meta:set_string("infotext", "Tubelib Distributor "..number..": running")
 	local filter = minetest.deserialize(meta:get_string("filter"))
 	meta:set_string("formspec", distributor_formspec(tubelib.RUNNING, filter))
-	minetest.get_node_timer(pos):start(2)
+	minetest.get_node_timer(pos):start(CYCLE_TIME)
 	return false
 end
 
@@ -174,7 +178,7 @@ local function stop_the_machine(pos)
 	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", 0)
+	meta:set_int("running", STOP_STATE)
 	node.name = "tubelib:distributor"
 	minetest.swap_node(pos, node)
 	meta:set_string("infotext", "Tubelib Distributor "..number..": stopped")
@@ -188,13 +192,13 @@ local function goto_sleep(pos)
 	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", -1)
+	meta:set_int("running", STANDBY_STATE)
 	node.name = "tubelib:distributor"
 	minetest.swap_node(pos, node)
 	meta:set_string("infotext", "Tubelib Distributor "..number..": standby")
 	local filter = minetest.deserialize(meta:get_string("filter"))
 	meta:set_string("formspec", distributor_formspec(tubelib.STANDBY, filter))
-	minetest.get_node_timer(pos):start(10)
+	minetest.get_node_timer(pos):start(CYCLE_TIME * TICKS_TO_SLEEP)
 	return false
 end	
 
@@ -298,7 +302,7 @@ local function on_receive_fields(pos, formname, fields, player)
 	filter_settings(pos)
 	
 	if fields.button ~= nil then
-		if running > 0 then
+		if running > STOP_STATE or running == FAULT_STATE then
 			stop_the_machine(pos)
 		else
 			start_the_machine(pos)
@@ -430,7 +434,7 @@ tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
 			local running = meta:get_int("running")
-			return tubelib.statestring(runnnig)
+			return tubelib.statestring(running)
 		else
 			return "unsupported"
 		end
