@@ -62,6 +62,7 @@ and as templates for own projects:
 
 ## 5. Further information
 
-The complete API is located in the file [command.lua]. This file gives more information to each
-API function and is recommended for further study.
+The complete API is located in the file 
+![command.lua](https://github.com/joe7575/Minetest-Tubelib/blob/master/command.lua). 
+This file gives more information to each API function and is recommended for further study.
 
