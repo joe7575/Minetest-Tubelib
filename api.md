@@ -25,28 +25,28 @@ the same position gets the same number as the previously placed node on that
 position.
 
 The communication supports two services:
-- send_message: Send a message to one or more nodes without response
-- send_request: Send a messages to exactly one node and request a response
+- `send_message`: Send a message to one or more nodes without response
+- `send_request`: Send a messages to exactly one node and request a response
 
 
 ## 3. API funtions
 
 Before a node can take part on ItemStack exchange or data communication
 it has to be registered once via:
-- tubelib.register_node(name, add_names, node_definition)
+- `tubelib.register_node(name, add_names, node_definition)`
 
 Each node shall call:
-- tubelib.add_node(pos, name) when it was placed and
-- tubelib.remove_node(pos) when it was dug.
+- `tubelib.add_node(pos, name)` when it was placed and
+- `tubelib.remove_node(pos)` when it was dug.
 
 For StackItem exchange the following functions exist:
-- tubelib.pull_items(pos, side)
-- tubelib.push_items(pos, side, items)
-- tubelib.unpull_items(pos, side, items)
+- `tubelib.pull_items(pos, side)`
+- `tubelib.push_items(pos, side, items)`
+- `tubelib.unpull_items(pos, side, items)`
 
 For data communication the following functions exist:
-- tubelib.send_message(numbers, placer_name, clicker_name, topic, payload)
-- tubelib.send_request(number, placer_name, clicker_name, topic, payload)
+- `tubelib.send_message(numbers, placer_name, clicker_name, topic, payload)`
+- `tubelib.send_request(number, placer_name, clicker_name, topic, payload)`
 
 
 ## 4. Examples
@@ -62,7 +62,7 @@ and as templates for own projects:
 
 ## 5. Further information
 
-The complete API is located in the file 
+The complete functionality is implemented in the file 
 ![command.lua](https://github.com/joe7575/Minetest-Tubelib/blob/master/command.lua). 
-This file gives more information to each API function and is recommended for further study.
+This file gives further information to each API function and is recommended for further study.
 

@@ -112,9 +112,8 @@ local function allow_metadata_inventory_put(pos, listname, index, stack, player)
 		return stack:get_count()
 	elseif invlist_num_entries(list) < NUM_FILTER_ELEM then
 		return 1
-	else
-		return 0
 	end
+	return 0
 end
 
 local function allow_metadata_inventory_take(pos, listname, index, stack, player)

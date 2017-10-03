@@ -1,2 +1,2 @@
-Lumber tubes and a simple communication API for Minetest.
+Tubes Mod with message communication interace as basis for further Mods.
 
