@@ -15,24 +15,27 @@
 ]]--
 
 --  
---  The facedirs, contact-sides, coordinates, and orientations of a node:
+-- Param 'side' is the node contact side where you push items out or let items in.
+-- This is one of B(ack), R(ight), F(ront), L(eft), D(own), U(p) acouring to the facedir.
+-- Here the facedirs, contact-sides, coordinates, and orientations of a node:
 --
---                 5/up/Y/-
---                         _ 
---                    /\    /| 0/back/Z/north
---                    |    /
---                    |   /
---                 +--|-----+
---                /   o    /|
---               +--------+ |
---         3 ----|        |o----> 1/right/X/east
---               |    o   | |
---               |   /    | +
---               |  /     |/
---               +-/------+
---                /   |
---               2    |
---                    4
+--                     5/up/Y/-
+--                             _ 
+--                        /\    /| 0/back/Z/north
+--                        |    /
+--                        |   /
+--                     +--|-----+
+--                    /   o    /|
+--                   +--------+ |
+--  3/left/-X/west---|        |o----> 1/right/X/east
+--                   |    o   | |
+--                   |   /    | +
+--                   |  /     |/
+--                   +-/------+
+--                    /   |
+--           2/front/-Z/- |
+--                        |
+--                     4/down/-y/-
 
 
 -------------------------------------------------------------------
