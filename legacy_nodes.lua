@@ -27,19 +27,6 @@ tubelib.register_node("default:chest", {"default:chest_open"}, {
 		local meta = minetest.get_meta(pos)
 		return tubelib.put_item(meta, "main", item)
 	end,
-	on_recv_message = function(pos, topic, payload)
-		if topic == "state" then
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			if inv:is_empty("main") then
-				return "empty"
-			else
-				return "not empty"
-			end
-		else
-			return "unsupported"
-		end
-	end,
 })	
 
 
@@ -55,19 +42,6 @@ tubelib.register_node("default:chest_locked", {"default:chest_locked_open"}, {
 	on_unpull_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
 		return tubelib.put_item(meta, "main", item)
-	end,
-	on_recv_message = function(pos, topic, payload)
-		if topic == "state" then
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			if inv:is_empty("main") then
-				return "empty"
-			else
-				return "not empty"
-			end
-		else
-			return "unsupported"
-		end
 	end,
 })	
 
@@ -89,6 +63,7 @@ local FuelTbl = {
 	["default:aspen_wood"] = true,
 	["default:aspen_leaves"] = true,
 	["default:coalblock"] = true,
+	["default:coal_lump"] = true,
 }
 
 tubelib.register_node("default:furnace", {"default:furnace_active"}, {
@@ -108,20 +83,5 @@ tubelib.register_node("default:furnace", {"default:furnace_active"}, {
 	on_unpull_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
 		return tubelib.put_item(meta, "dst", item)
-	end,
-	on_recv_message = function(pos, topic, payload)
-		if topic == "state" then
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			if inv:is_empty("fuel") then
-				return "no fuel"
-			elseif inv:is_empty("src") then
-				return "empty"
-			else
-				return "running"
-			end
-		else
-			return "unsupported"
-		end
 	end,
 })	
