@@ -11,7 +11,7 @@ Tubelib supports:
 
 Tubes represent connections between two nodes, so that it is irrelevant
 if the receiving node is nearby or far away, connected via tubes.
-The length of the tube is limited to 50 blocks.
+The length of the tube is limited to 50 nodes.
 
 For StackItem exchange we have to distinguish the following roles:
 - client: An active node calling push/pull functions
@@ -184,7 +184,7 @@ For data communication the following functions exist:
 ```LUA
     tubelib.send_message(numbers, placer_name, clicker_name, topic, payload)
 ```
-Send a message to all blocks referenced by `numbers`, a string with
+Send a message to all nodes referenced by `numbers`, a string with
 one or more destination node numbers separated by blanks. 
 The message is based on a topic string (e.g. "start") and
 a topic related payload.
@@ -199,7 +199,7 @@ Because several nodes could be addressed, the function don't return any response
 ```LUA
     tubelib.send_request(number, placer_name, clicker_name, topic, payload)
 ```
-In contrast to `send_message` this functions send a message to exactly one block 
+In contrast to `send_message` this functions send a message to exactly one node 
 referenced by `number` and returns the node response. 
 The message is based on the topic string (e.g. "state") and
 topic related payload.
