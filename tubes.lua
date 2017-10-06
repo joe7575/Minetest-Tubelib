@@ -98,7 +98,7 @@ local function dir_to_facedir(my_pos, other_pos)
 end
 
 -------------------------------------------------------------------------------
--- API function
+-- API functions
 -------------------------------------------------------------------------------
 
 -- Determine neighbor position and own facedir to the node.
@@ -117,6 +117,21 @@ function tubelib.get_neighbor_pos(pos, side)
 	end
 	return npos, facedir
 end
+
+-- use Voxel Manipulator to read the node
+function tubelib.read_node_with_vm(pos)
+	local vm = VoxelManip()
+	local MinEdge, MaxEdge = vm:read_from_map(pos, pos)
+	local data = vm:get_data()
+	local param2_data = vm:get_param2_data()
+	local area = VoxelArea:new({MinEdge = MinEdge, MaxEdge = MaxEdge})
+	return {
+		name=minetest.get_name_from_content_id(data[area:index(pos.x, pos.y, pos.z)]),
+		param2 = param2_data[area:index(pos.x, pos.y, pos.z)]
+	}
+end
+
+local read_node_with_vm = tubelib.read_node_with_vm
 
 -------------------------------------------------------------------------------
 -- Tube placement
@@ -210,18 +225,6 @@ local function nodetype_to_pos(mpos, opos, node)
 	end
 end
 
--- use Voxel Manipulator to read the node
-local function read_node_with_vm(pos)
-	local vm = VoxelManip()
-	local MinEdge, MaxEdge = vm:read_from_map(pos, pos)
-	local data = vm:get_data()
-	local param2_data = vm:get_param2_data()
-	local area = VoxelArea:new({MinEdge = MinEdge, MaxEdge = MaxEdge})
-	return {
-		name=minetest.get_name_from_content_id(data[area:index(pos.x, pos.y, pos.z)]),
-		param2 = param2_data[area:index(pos.x, pos.y, pos.z)]
-	}
-end
 
 -- Walk to the other end of the tube line, starting at 'pos1'.
 -- Returns: cnt - number of tube nodes

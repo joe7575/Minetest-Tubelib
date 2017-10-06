@@ -9,6 +9,7 @@ But Tubelib provides the following basic blocks:
 ### Tubes
 Tubes allow the item exchange between two blocks. Tube forks are not possible. You have to use chests or other inventory blocks as hubs to build more complex structures. The maximum length of one tube line is 48 blocks.
 Tubes for itself are passive. For item exchange you have to use pulling/pushing blocks in addition.
+The maximum tube length is limited to 100 nodes.
 
 ### Pusher
 The Pusher is able to pull one item out of one inventory block and pushing it into another inventory block directly or by means of tubes.

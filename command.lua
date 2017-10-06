@@ -48,6 +48,7 @@ local string_split = string.split
 local minetest_is_protected = minetest.is_protected
 local tubelib_NodeDef = tubelib.NodeDef
 local get_neighbor_pos = tubelib.get_neighbor_pos
+local read_node_with_vm = tubelib.read_node_with_vm
 
 -- Translate from facedir to contact side of the other node
 -- (left for one is right for the other node)
@@ -73,7 +74,7 @@ end
 -- Determine the contact side of the node at the given pos
 -- param facedir: facedir to the node
 local function get_node_side(npos, facedir)	
-	local node = minetest.get_node(npos)
+	local node = minetest.get_node_or_nil(npos) or read_node_with_vm(npos)
 	if facedir < 4 then
 		facedir = (facedir - node.param2 + 4) % 4
 	end

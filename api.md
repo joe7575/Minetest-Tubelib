@@ -11,7 +11,7 @@ Tubelib supports:
 
 Tubes represent connections between two nodes, so that it is irrelevant
 if the receiving node is nearby or far away, connected via tubes.
-The length of the tube is limited to 50 nodes.
+The length of the tube is limited to 100 nodes.
 
 For StackItem exchange we have to distinguish the following roles:
 - client: An active node calling push/pull functions
