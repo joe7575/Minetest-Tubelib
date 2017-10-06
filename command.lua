@@ -14,30 +14,6 @@
 
 ]]--
 
---  
--- Param 'side' is the node contact side where you push items out or let items in.
--- This is one of B(ack), R(ight), F(ront), L(eft), D(own), U(p) acouring to the facedir.
--- Here the facedirs, contact-sides, coordinates, and orientations of a node:
---
---                     5/up/Y/-
---                             _ 
---                        /\    /| 0/back/Z/north
---                        |    /
---                        |   /
---                     +--|-----+
---                    /   o    /|
---                   +--------+ |
---  3/left/-X/west---|        |o----> 1/right/X/east
---                   |    o   | |
---                   |   /    | +
---                   |  /     |/
---                   +-/------+
---                    /   |
---           2/front/-Z/- |
---                        |
---                     4/down/-y/-
-
-
 -------------------------------------------------------------------
 -- Data base storage
 -------------------------------------------------------------------
@@ -133,9 +109,7 @@ end
 
 
 -------------------------------------------------------------------
--------------------------------------------------------------------
 -- Node construction/destruction functions
--------------------------------------------------------------------
 -------------------------------------------------------------------
 	
 -- Add node to the tubelib lists and update the tube surrounding.
@@ -174,38 +148,12 @@ end
 -- Param name: The node name like "tubelib:pusher"
 -- Param add_names: Alternativ node names if needded, e.g.: "tubelib:pusher_active"
 -- Param node_definition: A table according to:
--- 
 --    {
--- 	      -- Pull an item from the node inventory.
--- 	      -- The function shall return an item stack with one element
---        -- like ItemStack("default:cobble") or nil.
---        -- Param side: The node contact side, where the item shall be pulled out.
---        -- Param player_name: Can be used to check access rights.
 --        on_pull_item = func(pos, side, player_name),
---
---        -- Push the given item into the node inventory.
---        -- Function shall return true/false
---        -- Param side: The node contact side, where the item shall be pushed in.
---        -- Param player_name: Can be used to check access rights.
---        -- The function shall return true, or false if the push is no possible.
 --        on_push_item = func(pos, side, item, player_name),
---
---        -- Undo the previous pull and place the given item back into the inventory.
---        -- Param side: The node contact side, where the item shall be unpulled.
---        -- Param player_name: Can be used to check access rights.
---        -- The function shall return true, or false if the unpull is no possible.
 --        on_unpull_item = func(pos, side, item, player_name),
---
---        -- Execute the requested command
---        -- and return true/false for commands like start/stop 
---        -- or return the requested data for commands like a status request.
---        -- Param topic: A topic string like "start"
---        -- Param payload: Additional data for more come complex commands, 
---        --                payload can be a number, string, or table.
 --        on_recv_message = func(pos, topic, payload),
---            -- 
 --    }
---
 function tubelib.register_node(name, add_names, node_definition)
 	tubelib_NodeDef[name] = node_definition
 	-- store facedir table for all known node names
@@ -218,19 +166,9 @@ function tubelib.register_node(name, add_names, node_definition)
 end
 
 -------------------------------------------------------------------
--- Send message function
+-- Send message functions
 -------------------------------------------------------------------
 
--- Send a message to all blocks referenced by 'numbers', a list of 
--- one or more destination addressses separated by blanks. 
--- The message is based on the topic string (e.g. "start") and
--- topic related payload.
--- The placer and clicker names are needed to check the protection rights. 
--- "placer_name" is the name of the player, who places the node.
--- "clicker_name" is the name of the player, who uses the node.
--- "placer_name" of sending and receiving nodes have to be the same.
--- If every player should be able to send a message, use nil for clicker_name.
--- Because several nodes could be addressed, the function don't return a response.
 function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload)
 	for _,num in ipairs(string_split(numbers, " ")) do
 		if Number2Pos[num] and Number2Pos[num].name then
@@ -246,19 +184,6 @@ function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload
 	end
 end		
 
--------------------------------------------------------------------
--- Request message function
--------------------------------------------------------------------
-
--- In contrast to "send_message" this functions send a message to exactly one block 
--- referenced by 'number' and delivers the node response. 
--- The message is based on the topic string (e.g. "state") and
--- topic related payload.
--- The placer and clicker names are needed to check the protection rights. 
--- "placer_name" is the name of the player, who places the node.
--- "clicker_name" is the name of the player, who uses the node.
--- "placer_name" of sending and receiving nodes have to be the same.
--- If every player should be able to send a message, use nil for clicker_name.
 function tubelib.send_request(number, placer_name, clicker_name, topic, payload)
 	if Number2Pos[number] and Number2Pos[number].name then
 		local data = Number2Pos[number]
@@ -275,17 +200,9 @@ end
 
 
 -------------------------------------------------------------------
--------------------------------------------------------------------
 -- Client side Push/Pull item functions
 -------------------------------------------------------------------
--------------------------------------------------------------------
 
--- Pull one item from the given position specified by 'pos' and 'side'.
--- Param 'pos' is the own node position
--- Param 'side' is the contact side, where the item shall be pulled in 
--- Param 'player_name' can be used to check access rights.
--- The function returns an item stack with one element like ItemStack("default:cobble")
--- or nil.
 function tubelib.pull_items(pos, side, player_name)
 	local npos, facedir = get_neighbor_pos(pos, side)
 	local nside, node = get_node_side(npos, facedir)
@@ -296,13 +213,6 @@ function tubelib.pull_items(pos, side, player_name)
 	return nil
 end
 
-
--- Push one item to the given position specified by 'pos' and 'side'.
--- Param 'pos' is the own node position
--- Param 'side' is the contact side, where the item shall be pushed out 
--- Param 'item' is an item stack with one element like ItemStack("default:cobble")
--- Param 'player_name' can be used to check access rights.
--- The function returns true, or false if the push is no possible.
 function tubelib.push_items(pos, side, items, player_name)
 	local npos, facedir = get_neighbor_pos(pos, side)
 	local nside, node = get_node_side(npos, facedir)
@@ -316,13 +226,6 @@ function tubelib.push_items(pos, side, items, player_name)
 	return false
 end
 
-
--- Unpull the previously pulled item to the given position specified by 'pos' and 'side'.
--- Param 'pos' is the own node position
--- Param 'side' is the contact side, where the item shall be pushed out 
--- Param 'item' is an item stack with one element like ItemStack("default:cobble")
--- Param 'player_name' can be used to check access rights.
--- The function returns true, or false if the unpull is no possible.
 function tubelib.unpull_items(pos, side, items, player_name)
 	local npos, facedir = get_neighbor_pos(pos, side)
 	local nside, node = get_node_side(npos, facedir)
@@ -333,12 +236,9 @@ function tubelib.unpull_items(pos, side, items, player_name)
 	return false
 end
 	
-	
 
 -------------------------------------------------------------------
--------------------------------------------------------------------
 -- Server side helper functions
--------------------------------------------------------------------
 -------------------------------------------------------------------
 
 -- Get one item from the given ItemList. The position within the list
