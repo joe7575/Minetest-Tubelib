@@ -14,7 +14,7 @@
 ]]--
 
 
-local MAX_TUBE_LENGTH = 48
+local MAX_TUBE_LENGTH = 100
 
 local TubeTypes = {
 	0,0,0,0,0,0,1,3,1,3,	-- 01-10
@@ -209,7 +209,20 @@ local function nodetype_to_pos(mpos, opos, node)
 		return p1
 	end
 end
-	
+
+-- use Voxel Manipulator to read the node
+local function read_node_with_vm(pos)
+	local vm = VoxelManip()
+	local MinEdge, MaxEdge = vm:read_from_map(pos, pos)
+	local data = vm:get_data()
+	local param2_data = vm:get_param2_data()
+	local area = VoxelArea:new({MinEdge = MinEdge, MaxEdge = MaxEdge})
+	return {
+		name=minetest.get_name_from_content_id(data[area:index(pos.x, pos.y, pos.z)]),
+		param2 = param2_data[area:index(pos.x, pos.y, pos.z)]
+	}
+end
+
 -- Walk to the other end of the tube line, starting at 'pos1'.
 -- Returns: cnt - number of tube nodes
 --          pos - the peer tube node
@@ -222,7 +235,7 @@ local function walk_to_peer(pos, pos1)
 		pos2 = nodetype_to_pos(pos, pos1, node)
 		pos, pos1 = pos1, pos2
 		cnt = cnt + 1
-		node = minetest.get_node(pos1)
+		node = minetest.get_node_or_nil(pos1) or read_node_with_vm(pos1)
 	end
 	return cnt, pos, pos1
 end	
@@ -256,7 +269,9 @@ local function update_head_tubes(pos)
 		if cnt2 > 1 then
 			minetest.get_meta(pos2):from_table(nil)
 		end
+		return cnt1 + cnt2
 	end
+	return 0
 end	
 		
 -- Update all tubes arround the currently placed tube		
@@ -268,7 +283,7 @@ local function update_surrounding_tubes(pos)
 	update_tube({x=pos.x  , y=pos.y-1, z=pos.z  })
 	update_tube({x=pos.x  , y=pos.y+1, z=pos.z  })
 	update_tube(pos)
-	update_head_tubes(pos)
+	return update_head_tubes(pos) < MAX_TUBE_LENGTH
 end		
 
 	
@@ -389,7 +404,11 @@ for idx,pos in ipairs(DirCorrections) do
 		},
 		
 		after_place_node = function(pos, placer, itemstack, pointed_thing)
-			update_surrounding_tubes(pos)
+			if update_surrounding_tubes(pos) == false then
+				after_tube_removed(pos, minetest.get_node(pos))
+				minetest.remove_node(pos)
+				return itemstack
+			end
 		end,
 		
 		after_dig_node = function(pos, oldnode, oldmetadata, digger)
