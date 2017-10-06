@@ -31,40 +31,31 @@ tubelib.register_node("default:chest", {"default:chest_open"}, {
 
 
 tubelib.register_node("default:chest_locked", {"default:chest_locked_open"}, {
-	on_pull_item = function(pos, side)
+	on_pull_item = function(pos, side, player_name)
 		local meta = minetest.get_meta(pos)
-		return tubelib.get_item(meta, "main")
+		local owner = meta:get_string("owner")
+		if player_name == owner or player_name == "" then
+			return tubelib.get_item(meta, "main")
+		end
+		return nil
 	end,
-	on_push_item = function(pos, side, item)
+	on_push_item = function(pos, side, item, player_name)
 		local meta = minetest.get_meta(pos)
-		return tubelib.put_item(meta, "main", item)
+		local owner = meta:get_string("owner")
+		if player_name == owner or player_name == "" then
+			return tubelib.put_item(meta, "main", item)
+		end
+		return false
 	end,
-	on_unpull_item = function(pos, side, item)
+	on_unpull_item = function(pos, side, item, player_name)
 		local meta = minetest.get_meta(pos)
-		return tubelib.put_item(meta, "main", item)
+		local owner = meta:get_string("owner")
+		if player_name == owner or player_name == "" then
+			return tubelib.put_item(meta, "main", item)
+		end
+		return nil
 	end,
 })	
-
--- used for furnace
-local FuelTbl = {
-	["default:tree"] = true,
-	["default:wood"] = true,
-	["default:leaves"] = true,
-	["default:jungletree"] = true,
-	["default:junglewood"] = true,
-	["default:jungleleaves"] = true,
-	["default:pine_tree"] = true,
-	["default:pine_wood"] = true,
-	["default:pine_needles"] = true,
-	["default:acacia_tree"] = true,
-	["default:acacia_wood"] = true,
-	["default:acacia_leaves"] = true,
-	["default:aspen_tree"] = true,
-	["default:aspen_wood"] = true,
-	["default:aspen_leaves"] = true,
-	["default:coalblock"] = true,
-	["default:coal_lump"] = true,
-}
 
 tubelib.register_node("default:furnace", {"default:furnace_active"}, {
 	on_pull_item = function(pos, side)
@@ -74,7 +65,7 @@ tubelib.register_node("default:furnace", {"default:furnace_active"}, {
 	on_push_item = function(pos, side, item)
 		local meta = minetest.get_meta(pos)
 		minetest.get_node_timer(pos):start(1.0)
-		if FuelTbl[item:get_name()] == true then
+		if minetest.get_craft_result({method="fuel", width=1, items={item}}).time ~= 0 then
 			return tubelib.put_item(meta, "fuel", item)
 		else
 			return tubelib.put_item(meta, "src", item)

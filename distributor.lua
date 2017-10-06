@@ -131,16 +131,16 @@ local function allow_metadata_inventory_move(pos, from_list, from_index, to_list
 end
 
 local SlotColors = {"red", "green", "blue", "yellow"}
-local Num2Ascii = {"B", "L", "F", "R"}		-- color to side translation
-local FilterCache = {}						-- local cache for filter settings
+local Num2Ascii = {"B", "L", "F", "R"} -- color to side translation
+local FilterCache = {} -- local cache for filter settings
 
 local function filter_settings(pos)
 	local hash = minetest.hash_node_position(pos)
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
 	local filter = minetest.deserialize(meta:get_string("filter")) or {false,false,false,false}
-	local kvFilterItemNames = {}  	-- {<item:name> = true,...}
-	local kvSide2ItemNames = {}		-- {"F" = {<item:name>,...},...}
+	local kvFilterItemNames = {} -- {<item:name> = true,...}
+	local kvSide2ItemNames = {} -- {"F" = {<item:name>,...},...}
 	
 	-- collect all filter settings
 	for idx,slot in ipairs(SlotColors) do
@@ -205,6 +205,7 @@ end
 local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local running = meta:get_int("running") - 1
+	local player_name = meta:get_string("player_name")
 	--print("running", running)
 	local slot_idx = meta:get_int("slot_idx") or 1
 	meta:set_int("slot_idx", (slot_idx + 1) % NUM_FILTER_SLOTS)
@@ -236,9 +237,9 @@ local function keep_running(pos, elapsed)
 	if next(names) then
 		for _,name in ipairs(names) do
 			if kvSrc[name] then
-				local item = tubelib.get_this_item(meta, "src", kvSrc[name])	-- <<=== tubelib
+				local item = tubelib.get_this_item(meta, "src", kvSrc[name]) -- <<=== tubelib
 				if item then
-					if not tubelib.push_items(pos, side, item) then				-- <<=== tubelib
+					if not tubelib.push_items(pos, side, item, player_name) then -- <<=== tubelib
 						tubelib.put_item(meta, "src", item)
 					else
 						busy = true
@@ -252,9 +253,9 @@ local function keep_running(pos, elapsed)
 	if next(names) == nil then
 		for name,_ in pairs(kvSrc) do
 			if kvFilterItemNames[name] == nil then  -- not in the filter so far?
-				local item = tubelib.get_this_item(meta, "src", kvSrc[name])		-- <<=== tubelib
+				local item = tubelib.get_this_item(meta, "src", kvSrc[name]) -- <<=== tubelib
 				if item then
-					if not tubelib.push_items(pos, side, item) then					-- <<=== tubelib
+					if not tubelib.push_items(pos, side, item, player_name) then -- <<=== tubelib
 						tubelib.put_item(meta, "src", item)
 					else
 						busy = true
@@ -324,9 +325,9 @@ minetest.register_node("tubelib:distributor", {
 	},
 
 	after_place_node = function(pos, placer)
-		local number = tubelib.add_node(pos, "tubelib:distributor")			-- <<=== tubelib
+		local number = tubelib.add_node(pos, "tubelib:distributor") -- <<=== tubelib
 		local meta = minetest.get_meta(pos)
-		local placer_name = placer:get_player_name()
+		meta:set_string("player_name", placer:get_player_name())
 
 		local filter = {false,false,false,false}
 		meta:set_string("formspec", distributor_formspec(tubelib.STOPPED, filter))
@@ -351,7 +352,7 @@ minetest.register_node("tubelib:distributor", {
 		local inv = meta:get_inventory()
 		if inv:is_empty("src") then
 			minetest.node_dig(pos, node, puncher, pointed_thing)
-			tubelib.remove_node(pos)												-- <<=== tubelib
+			tubelib.remove_node(pos) -- <<=== tubelib
 		end
 	end,
 

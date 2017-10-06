@@ -13,7 +13,7 @@
 	2017-09-12  v0.02  bugfix in tubelib.get_pos() and others
 	2017-09-21  v0.03  function get_num_items added
 	2017-09-26  v0.04  param side added, node blackhole added
-
+	2017-10-06  v0.05  Parameter 'player_name' added, furnace fuel detection changed
 ]]--
 
 

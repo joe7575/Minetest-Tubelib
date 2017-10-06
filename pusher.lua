@@ -68,8 +68,9 @@ local function keep_running(pos, elapsed)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
 	local running = meta:get_int("running") - 1
+	local player_name = meta:get_string("player_name")
 	--print("running", running)
-	local items = tubelib.pull_items(pos, "L")								-- <<=== tubelib
+	local items = tubelib.pull_items(pos, "L", player_name) -- <<=== tubelib
 	if items ~= nil then
 		if running <= 0 then
 			local node = minetest.get_node(pos)
@@ -77,9 +78,9 @@ local function keep_running(pos, elapsed)
 		else
 			running = SLEEP_CNT_START_VAL
 		end
-		if tubelib.push_items(pos, "R", items) == false then				-- <<=== tubelib
+		if tubelib.push_items(pos, "R", items, player_name) == false then -- <<=== tubelib
 			-- place item back
-			tubelib.unpull_items(pos, "L", items)							-- <<=== tubelib
+			tubelib.unpull_items(pos, "L", items, player_name) -- <<=== tubelib
 			local node = minetest.get_node(pos)
 			return goto_sleep(pos, node)
 		end
@@ -107,7 +108,8 @@ minetest.register_node("tubelib:pusher", {
 
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
-		local number = tubelib.add_node(pos, "tubelib:pusher")					-- <<=== tubelib
+		meta:set_string("player_name", placer:get_player_name())
+		local number = tubelib.add_node(pos, "tubelib:pusher") -- <<=== tubelib
 		meta:set_string("number", number)
 		meta:set_string("infotext", "Pusher "..number..": stopped")
 	end,
@@ -119,7 +121,7 @@ minetest.register_node("tubelib:pusher", {
 	end,
 
 	after_dig_node = function(pos)
-		tubelib.remove_node(pos)												-- <<=== tubelib
+		tubelib.remove_node(pos) -- <<=== tubelib
 	end,
 	
 	on_timer = keep_running,

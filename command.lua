@@ -180,16 +180,21 @@ end
 -- 	      -- The function shall return an item stack with one element
 --        -- like ItemStack("default:cobble") or nil.
 --        -- Param side: The node contact side, where the item shall be pulled out.
---        on_pull_item = func(pos, side),
+--        -- Param player_name: Can be used to check access rights.
+--        on_pull_item = func(pos, side, player_name),
 --
 --        -- Push the given item into the node inventory.
 --        -- Function shall return true/false
 --        -- Param side: The node contact side, where the item shall be pushed in.
---        on_push_item = func(pos, side, item),
+--        -- Param player_name: Can be used to check access rights.
+--        -- The function shall return true, or false if the push is no possible.
+--        on_push_item = func(pos, side, item, player_name),
 --
 --        -- Undo the previous pull and place the given item back into the inventory.
 --        -- Param side: The node contact side, where the item shall be unpulled.
---        on_unpull_item = func(pos, side, item),
+--        -- Param player_name: Can be used to check access rights.
+--        -- The function shall return true, or false if the unpull is no possible.
+--        on_unpull_item = func(pos, side, item, player_name),
 --
 --        -- Execute the requested command
 --        -- and return true/false for commands like start/stop 
@@ -247,7 +252,7 @@ end
 
 -- In contrast to "send_message" this functions send a message to exactly one block 
 -- referenced by 'number' and delivers the node response. 
--- The message is based on the topic string (e.g. "status") and
+-- The message is based on the topic string (e.g. "state") and
 -- topic related payload.
 -- The placer and clicker names are needed to check the protection rights. 
 -- "placer_name" is the name of the player, who places the node.
@@ -278,14 +283,15 @@ end
 -- Pull one item from the given position specified by 'pos' and 'side'.
 -- Param 'pos' is the own node position
 -- Param 'side' is the contact side, where the item shall be pulled in 
+-- Param 'player_name' can be used to check access rights.
 -- The function returns an item stack with one element like ItemStack("default:cobble")
 -- or nil.
-function tubelib.pull_items(pos, side)
+function tubelib.pull_items(pos, side, player_name)
 	local npos, facedir = get_neighbor_pos(pos, side)
 	local nside, node = get_node_side(npos, facedir)
 	local name = Name2Name[node.name]
 	if tubelib_NodeDef[name] and tubelib_NodeDef[name].on_pull_item then
-		return tubelib_NodeDef[name].on_pull_item(npos, nside)
+		return tubelib_NodeDef[name].on_pull_item(npos, nside, player_name)
 	end
 	return nil
 end
@@ -295,12 +301,14 @@ end
 -- Param 'pos' is the own node position
 -- Param 'side' is the contact side, where the item shall be pushed out 
 -- Param 'item' is an item stack with one element like ItemStack("default:cobble")
-function tubelib.push_items(pos, side, items)
+-- Param 'player_name' can be used to check access rights.
+-- The function returns true, or false if the push is no possible.
+function tubelib.push_items(pos, side, items, player_name)
 	local npos, facedir = get_neighbor_pos(pos, side)
 	local nside, node = get_node_side(npos, facedir)
 	local name = Name2Name[node.name]
 	if tubelib_NodeDef[name] and tubelib_NodeDef[name].on_push_item then
-		return tubelib_NodeDef[name].on_push_item(npos, nside, items)	
+		return tubelib_NodeDef[name].on_push_item(npos, nside, items, player_name)	
 	elseif node.name == "air" then
 		minetest.add_item(npos, items)
 		return true 
@@ -313,12 +321,14 @@ end
 -- Param 'pos' is the own node position
 -- Param 'side' is the contact side, where the item shall be pushed out 
 -- Param 'item' is an item stack with one element like ItemStack("default:cobble")
-function tubelib.unpull_items(pos, side, items)
+-- Param 'player_name' can be used to check access rights.
+-- The function returns true, or false if the unpull is no possible.
+function tubelib.unpull_items(pos, side, items, player_name)
 	local npos, facedir = get_neighbor_pos(pos, side)
 	local nside, node = get_node_side(npos, facedir)
 	local name = Name2Name[node.name]
 	if tubelib_NodeDef[name] and tubelib_NodeDef[name].on_unpull_item then
-		return tubelib_NodeDef[name].on_unpull_item(npos, nside, items)
+		return tubelib_NodeDef[name].on_unpull_item(npos, nside, items, player_name)
 	end
 	return false
 end
