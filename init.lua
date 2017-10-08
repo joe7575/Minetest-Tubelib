@@ -14,12 +14,16 @@
 	2017-09-21  v0.03  function get_num_items added
 	2017-09-26  v0.04  param side added, node blackhole added
 	2017-10-06  v0.05  Parameter 'player_name' added, furnace fuel detection changed
+	2017-10-08  v0.06  tubelib.get_node_number() added, tubelib.version added
 ]]--
 
 
 tubelib = {
 	NodeDef = {},		-- node registration info
 }
+
+tubelib.version = 0.06
+
 
 --------------------------- conversion to v0.04
 minetest.register_lbm({
