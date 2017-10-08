@@ -39,14 +39,14 @@ minetest.register_node("tubelib:blackhole", {
 
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
-		local number = tubelib.add_node(pos, "tubelib:blackhole")				-- <<=== tubelib
+		local number = tubelib.add_node(pos, "tubelib:blackhole") -- <<=== tubelib
 		meta:set_string("number", number)
 		meta:set_int("disappeared", 0)
 		meta:set_string("infotext","0 items disappeared")
 	end,
 
 	after_dig_node = function(pos)
-		tubelib.remove_node(pos)												-- <<=== tubelib
+		tubelib.remove_node(pos) -- <<=== tubelib
 	end,
 
 	paramtype2 = "facedir",
@@ -59,9 +59,9 @@ minetest.register_node("tubelib:blackhole", {
 minetest.register_craft({
 	output = "tubelib:blackhole 2",
 	recipe = {
-		{"group:wood", 		" ",   				"group:wood"},
-		{"tubelib:tube1", 	"default:coal",		""},
-		{"group:wood", 		" ",   				"group:wood"},
+		{"group:wood",    "",                   "group:wood"},
+		{"tubelib:tube1", "default:coal_lump",  "default:coal_lump"},
+		{"group:wood",    "",                   "group:wood"},
 	},
 })
 
