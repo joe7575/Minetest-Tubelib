@@ -108,6 +108,19 @@ function tubelib.get_node_info(dest_num)
 	return nil
 end	
 
+-- Function returns the node number from the given position or
+-- nil, if no node number for this position is assigned.
+function tubelib.get_node_number(pos)
+	local key = get_key_str(pos)
+	local num = Key2Number[key]
+	if num then
+		num = string.format("%.04u", num)
+		if Number2Pos[num] and Number2Pos[num].name then
+			return num
+		end
+	end
+	return nil
+end	
 
 -------------------------------------------------------------------
 -- Node construction/destruction functions
