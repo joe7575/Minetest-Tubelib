@@ -35,7 +35,7 @@ minetest.register_node("tubelib:lamp", {
 	},
 
 	after_place_node = function(pos, placer)
-		local number = tubelib.add_node(pos, "tubelib:lamp")			-- <<=== tubelib
+		local number = tubelib.add_node(pos, "tubelib:lamp")  -- <<=== tubelib
 		local meta = minetest.get_meta(pos)
 		meta:set_string("infotext", "Tubelib Lamp "..number)
 	end,
@@ -47,7 +47,7 @@ minetest.register_node("tubelib:lamp", {
 	end,
 
 	after_dig_node = function(pos)
-		tubelib.remove_node(pos)										-- <<=== tubelib
+		tubelib.remove_node(pos)  -- <<=== tubelib
 	end,
 
 	paramtype = 'light',
@@ -77,9 +77,9 @@ minetest.register_node("tubelib:lamp_on", {
 minetest.register_craft({
 	output = "tubelib:lamp 4",
 	recipe = {
-		{"wool:white", 		"wool:white",  			"wool:white"},
-		{"tubelib:tube1", 	"default:coal_lump",	""},
-		{"group:wood", 		"",  					"group:wood"},
+		{"wool:white",    "wool:white",         "wool:white"},
+		{"tubelib:tube1", "default:coal_lump",  ""},
+		{"group:wood",    "",                   "group:wood"},
 	},
 })
 
@@ -90,9 +90,9 @@ tubelib.register_node("tubelib:lamp", {"tubelib:lamp_on"}, {
 	on_unpull_item = nil,		-- lamp has no inventory
 	on_recv_message = function(pos, topic, payload)
 		local node = minetest.get_node(pos)
-		if topic == "start" then
+		if topic == "start" or topic == "on" then
 			switch_on(pos, node)
-		elseif topic == "stop" then
+		elseif topic == "stop" or topic == "off" then
 			switch_off(pos, node)
 		end
 	end,
