@@ -36,7 +36,7 @@ local function switch_on(pos, node)
 	if meta:get_string("public") == "false" then
 		clicker_name = meta:get_string("clicker_name")
 	end
-	tubelib.send_message(number, placer_name, clicker_name, "start", nil)		-- <<=== tubelib
+	tubelib.send_message(number, placer_name, clicker_name, "on", nil)  -- <<=== tubelib
 end
 
 local function switch_off(pos)
@@ -52,7 +52,7 @@ local function switch_off(pos)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
 	local placer_name = meta:get_string("placer_name")
-	tubelib.send_message(number, placer_name, nil, "stop", nil)					-- <<=== tubelib
+	tubelib.send_message(number, placer_name, nil, "off", nil)  -- <<=== tubelib
 end
 
 
@@ -82,7 +82,7 @@ minetest.register_node("tubelib:button", {
 
 	on_receive_fields = function(pos, formname, fields, player)
 		local meta = minetest.get_meta(pos)
-		if tubelib.check_numbers(fields.number) then							-- <<=== tubelib
+		if tubelib.check_numbers(fields.number) then  -- <<=== tubelib
 			meta:set_string("number", fields.number)
 			meta:set_string("infotext", "Tubelib Button, connected with block "..fields.number)
 		else
@@ -117,9 +117,12 @@ minetest.register_node("tubelib:button", {
 		switch_on(pos, node)
 	end,
 
+	paramtype = "light",
+	sunlight_propagates = true,
 	paramtype2 = "facedir",
 	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 
@@ -143,9 +146,12 @@ minetest.register_node("tubelib:button_active", {
 
 	on_timer = switch_off,
 
+	paramtype = "light",
+	sunlight_propagates = true,
 	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_craft({

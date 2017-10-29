@@ -13,8 +13,8 @@
 	A more complex node acting as server and client.
 	This node claims a position number and registers its message and items interface.
 	The Distributor supports the following messages:
-	 - topic = "start", payload  = nil
-	 - topic = "stop" , payload  = nil
+	 - topic = "on", payload  = nil
+	 - topic = "off" , payload  = nil
 	 - topic = "state", payload  = nil, 
 	   response is "running", "stopped", "standby", or "not supported"
 ]]--
@@ -362,9 +362,12 @@ minetest.register_node("tubelib:distributor", {
 
 	on_timer = keep_running,
 	
+	paramtype = "light",
+	sunlight_propagates = true,
 	paramtype2 = "facedir",
-	groups = {cracky=1},
+	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 
@@ -397,9 +400,12 @@ minetest.register_node("tubelib:distributor_active", {
 
 	on_timer = keep_running,
 
+	paramtype = "light",
+	sunlight_propagates = true,
 	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_craft({
@@ -427,9 +433,9 @@ tubelib.register_node("tubelib:distributor", {"tubelib:distributor_active"}, {
 		return tubelib.put_item(meta, "src", item)
 	end,
 	on_recv_message = function(pos, topic, payload)
-		if topic == "start" then
+		if topic == "on" then
 			return start_the_machine(pos)
-		elseif topic == "stop" then
+		elseif topic == "off" then
 			return stop_the_machine(pos)
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)

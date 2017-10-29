@@ -14,8 +14,8 @@
 	inventory/server nodes to tubes or other inventory/server nodes.
 	
 	The Pusher supports the following messages:
-	 - topic = "start", payload  = nil
-	 - topic = "stop", payload  = nil
+	 - topic = "on", payload  = nil
+	 - topic = "off", payload  = nil
 	 - topic = "state", payload  = nil, 
 	   response is "running", "stopped", "standby", or "not supported"
 
@@ -29,12 +29,12 @@
 --               |        |/
 --               +--------+
 
-local SLEEP_CNT_START_VAL = 10 
+local RUNNING_STATE = 10 
 
 local function switch_on(pos, node)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", SLEEP_CNT_START_VAL)
+	meta:set_int("running", RUNNING_STATE)
 	meta:set_string("infotext", "Pusher "..number..": running")
 	node.name = "tubelib:pusher_active"
 	minetest.swap_node(pos, node)
@@ -69,20 +69,20 @@ local function keep_running(pos, elapsed)
 	local number = meta:get_string("number")
 	local running = meta:get_int("running") - 1
 	local player_name = meta:get_string("player_name")
-	--print("running", running)
 	local items = tubelib.pull_items(pos, "L", player_name) -- <<=== tubelib
 	if items ~= nil then
-		if running <= 0 then
-			local node = minetest.get_node(pos)
-			return switch_on(pos, node)
-		else
-			running = SLEEP_CNT_START_VAL
-		end
 		if tubelib.push_items(pos, "R", items, player_name) == false then -- <<=== tubelib
 			-- place item back
 			tubelib.unpull_items(pos, "L", items, player_name) -- <<=== tubelib
 			local node = minetest.get_node(pos)
 			return goto_sleep(pos, node)
+		end
+		if running <= 0 then
+			local node = minetest.get_node(pos)
+			return switch_on(pos, node)
+		else
+			-- reload running state
+			running = RUNNING_STATE
 		end
 	else
 		if running <= 0 then
@@ -126,9 +126,12 @@ minetest.register_node("tubelib:pusher", {
 	
 	on_timer = keep_running,
 
+	paramtype = "light",
+	sunlight_propagates = true,
 	paramtype2 = "facedir",
-	groups = {cracky=1},
+	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 
@@ -188,9 +191,12 @@ minetest.register_node("tubelib:pusher_active", {
 	
 	on_timer = keep_running,
 	
+	paramtype = "light",
+	sunlight_propagates = true,
 	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_craft({

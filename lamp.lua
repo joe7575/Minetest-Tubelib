@@ -13,8 +13,8 @@
 	Example of a simple communication node, only receiving messages from others.
 	This node claims a position number and registers its message interface.
 	The Lamp supports the following messages:
-	 - topic = "start", payload  = nil
-	 - topic = "stop" , payload  = nil
+	 - topic = "on", payload  = nil
+	 - topic = "off" , payload  = nil
 
 ]]--
 
@@ -50,10 +50,13 @@ minetest.register_node("tubelib:lamp", {
 		tubelib.remove_node(pos)  -- <<=== tubelib
 	end,
 
-	paramtype = 'light',
+	paramtype = "light",
 	light_source = 0,	
-	groups = {cracky=1},
+	sunlight_propagates = true,
+	paramtype2 = "facedir",
+	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_node("tubelib:lamp_on", {
@@ -68,10 +71,13 @@ minetest.register_node("tubelib:lamp_on", {
 		end
 	end,
 
-	paramtype = 'light',
+	paramtype = "light",
 	light_source = LIGHT_MAX,	
+	sunlight_propagates = true,
+	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_craft({
@@ -90,9 +96,9 @@ tubelib.register_node("tubelib:lamp", {"tubelib:lamp_on"}, {
 	on_unpull_item = nil,		-- lamp has no inventory
 	on_recv_message = function(pos, topic, payload)
 		local node = minetest.get_node(pos)
-		if topic == "start" or topic == "on" then
+		if topic == "on" then
 			switch_on(pos, node)
-		elseif topic == "stop" or topic == "off" then
+		elseif topic == "off" then
 			switch_off(pos, node)
 		end
 	end,

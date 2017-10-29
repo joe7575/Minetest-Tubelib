@@ -10,7 +10,7 @@ Tubelib supports:
 ## 1. StackItem Exchange 
 
 Tubes represent connections between two nodes, so that it is irrelevant
-if the receiving node is nearby or far away, connected via tubes.
+if the receiving node is nearby, or far away connected via tubes.
 The length of the tube is limited to 100 nodes.
 
 For StackItem exchange we have to distinguish the following roles:
@@ -64,7 +64,7 @@ The communication supports two services:
 - `send_request`: Send a messages to exactly one node and return the response
 
 It is up to the programmer, which messages shall be supported.
-But if a node can be switched on/off or started/stopped, use "start" and "stop" as commands
+But if a node can be switched on/off or started/stopped, use "on" and "off" as commands
 for both cases.
 
   
@@ -109,10 +109,10 @@ Parameters:
 
         on_recv_message = func(pos, topic, payload),
         -- Execute the requested message
-        -- Param topic: A topic string like "start"
+        -- Param topic: A topic string like "on"
         -- Param payload: Additional data for more come complex commands, 
         --                payload can be a number, string, or table.
-        -- The function shall return true/false for commands like start/stop 
+        -- The function shall return true/false for commands like on/off 
         -- or return the requested data for commands like a "state" request.
     }
 ```
@@ -282,3 +282,7 @@ The complete functionality is implemented in the file
 ![command.lua](https://github.com/joe7575/Minetest-Tubelib/blob/master/command.lua). 
 This file has further helper functions and is recommended for deeper study.
 
+## 7. History
+
+2017-10-02  First draft  
+2017-10-29  Commands start/stop replaced by on/off
