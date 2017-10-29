@@ -54,7 +54,7 @@ minetest.register_node("tubelib:blackhole", {
 	paramtype2 = "facedir",
 	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
-	sounds = default.node_sound_stone_defaults(),
+	sounds = default.node_sound_wood_defaults(),
 })
 
 

@@ -423,6 +423,7 @@ for idx,pos in ipairs(DirCorrections) do
         is_ground_content = false,
 		groups = {cracky=3, stone=1, not_in_creative_inventory=hidden},
 		drop = "tubelib:tube1",
+		sounds = default.node_sound_wood_defaults(),
     })
 end
 

@@ -56,7 +56,7 @@ minetest.register_node("tubelib:lamp", {
 	paramtype2 = "facedir",
 	groups = {cracky=2, crumbly=2},
 	is_ground_content = false,
-	sounds = default.node_sound_stone_defaults(),
+	sounds = default.node_sound_wood_defaults(),
 })
 
 minetest.register_node("tubelib:lamp_on", {
@@ -77,7 +77,7 @@ minetest.register_node("tubelib:lamp_on", {
 	paramtype2 = "facedir",
 	groups = {crumbly=0, not_in_creative_inventory=1},
 	is_ground_content = false,
-	sounds = default.node_sound_stone_defaults(),
+	sounds = default.node_sound_wood_defaults(),
 })
 
 minetest.register_craft({
