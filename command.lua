@@ -18,23 +18,29 @@
 -- Data base storage
 -------------------------------------------------------------------
 local storage = minetest.get_mod_storage()
-local Key2Number = minetest.deserialize(storage:get_string("Key2Number")) or {}
 local NextNumber = minetest.deserialize(storage:get_string("NextNumber")) or 1
+local Version = minetest.deserialize(storage:get_string("Version")) or 1
 local Number2Pos = minetest.deserialize(storage:get_string("Number2Pos")) or {}
 
 local function update_mod_storage()
-	storage:set_string("Key2Number", minetest.serialize(Key2Number))
 	storage:set_string("NextNumber", minetest.serialize(NextNumber))
+	storage:set_string("Version", minetest.serialize(Version))
 	storage:set_string("Number2Pos", minetest.serialize(Number2Pos))
+	storage:set_string("Key2Number", nil) -- not used any more 
+	-- store data each hour
+	minetest.after(60*60, update_mod_storage)
+	print("[Tubelib] Data stored")
 end
 
 minetest.register_on_shutdown(function()
 	update_mod_storage()
 end)
 
--- store data each hour
+-- store data after one hour
 minetest.after(60*60, update_mod_storage)
 
+-- Key2Number will be generated at runtine
+local Key2Number = {} 
 
 local Name2Name = {}		-- translation table
 
@@ -58,7 +64,7 @@ local FacedirToSide = {[0] = "F", "L", "B", "R", "U", "D"}
 -- Used internaly as table key,
 local function get_key_str(pos)
 	pos = minetest.pos_to_string(pos)
-	return '"'..string.sub(pos, 2, -2)..'"'
+	return string.sub(pos, 2, -2)
 end
 
 -- Determine position related node number for addressing purposes
@@ -81,6 +87,13 @@ local function get_node_side(npos, facedir)
 	return FacedirToSide[facedir], node
 end
 
+local function generate_Key2Number()
+	local key
+	for num,item in pairs(Number2Pos) do
+		key = get_key_str(item.pos)
+		Key2Number[key] = num
+	end
+end
 
 -------------------------------------------------------------------
 -- API helper functions
@@ -148,6 +161,7 @@ function tubelib.remove_node(pos)
 		Number2Pos[number] = {
 			pos = pos, 
 			name = nil,
+			time = minetest.get_day_count() -- used for aging
 		}
 	end
 end
@@ -330,3 +344,44 @@ function tubelib.get_num_items(meta, listname, num)
 	end
 	return nil
 end
+
+
+-------------------------------------------------------------------------------
+-- Data Maintenance
+-------------------------------------------------------------------------------
+local function data_maintenance()
+	print("[Tubelib] Data maintenance started")
+	if Version == 1 then
+		-- Add day_count for aging of unused positions
+		for num,item in pairs(Number2Pos) do
+			if Number2Pos[num].name == nil then
+				Number2Pos[num].time = minetest.get_day_count()
+			end
+		end
+		Version = 2
+	else
+		-- Remove old unused positions
+		local Tbl = table.copy(Number2Pos)
+		Number2Pos = {}
+		local day_cnt = minetest.get_day_count()
+		for num,item in pairs(Tbl) do
+			if item.name then
+				Number2Pos[num] = item
+			-- data not older than 5 real days
+			elseif item.time and (item.time + 360) > day_cnt then
+				Number2Pos[num] = item
+			else
+				print("Position deleted", num)
+			end
+		end
+	end
+	print("[Tubelib] Data maintenance finished")
+end	
+	
+generate_Key2Number()
+
+-- maintain data after one minute
+-- (minetest.get_day_count() will not be valid at start time)
+minetest.after(60, data_maintenance)
+
+

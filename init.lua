@@ -16,6 +16,7 @@
 	2017-10-06  v0.05  Parameter 'player_name' added, furnace fuel detection changed
 	2017-10-08  v0.06  tubelib.get_node_number() added, tubelib.version added
 	2017-10-29  v0.07  Pusher bugfix, commands start/stop replaced by on/off
+	2017-11-02  v0.08  Data base changed, aging of node positions added
 	
 ]]--
 
@@ -24,7 +25,7 @@ tubelib = {
 	NodeDef = {},		-- node registration info
 }
 
-tubelib.version = 0.07
+tubelib.version = 0.08
 
 
 --------------------------- conversion to v0.04
