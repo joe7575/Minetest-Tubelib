@@ -1,2 +1,2 @@
-Tubes Mod with message communication interace as basis for further Mods.
+Tubes Mod with message communication interface as basis for further technique Mods.
 
