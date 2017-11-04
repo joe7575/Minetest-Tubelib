@@ -8,13 +8,13 @@ The focus for this Mod are:
 - simple API for programmers
 
 The mod provides:
-- lumber tubes to connect 2 blocks
-- a Pusher block to pull/push items through tubes
-- a Distributor block with 4 output channels to sort incoming items
-- a Blackhole block which lets all items disappear (example/template for programmers)
-- a Button/switch block to send "switch on/off" messages
-- a Lamp block as receiving example for message communication
-- support for default blocks: furnace and chests
+- lumber tubes to connect 2 nodes
+- a Pusher node to pull/push items through tubes
+- a Distributor node with 4 output channels to sort incoming items
+- a Blackhole node which lets all items disappear (example/template for programmers)
+- a Button/switch node to send "switch on/off" messages
+- a Lamp node as receiving example for message communication
+- support for default node: furnace and chests
 
 Hints for Admins: ![manual.md](https://github.com/joe7575/Minetest-Tubelib/blob/master/manual.md)  
 Programmers Manual: ![api.md](https://github.com/joe7575/Minetest-Tubelib/blob/master/api.md)

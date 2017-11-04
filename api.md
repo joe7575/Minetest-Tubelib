@@ -270,10 +270,10 @@ If every player should be able to send a message, use nil for clicker_name.
 Tubelib includes the following example nodes which can be used for study
 and as templates for own projects:
 
-- pusher.lua: 		a simple client pushing/pulling items
-- blackhole.lua:	a simple server client, makes all items disappear
-- button.lua:		a simple communication node, only sending messages
-- lamp.lua:         a simple communication node, only receiving messages
+- pusher.lua:    a simple client pushing/pulling items
+- blackhole.lua: a simple server client, makes all items disappear
+- button.lua:    a simple communication node, only sending messages
+- lamp.lua:      a simple communication node, only receiving messages
 
 
 ## 6. Further information

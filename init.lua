@@ -17,6 +17,7 @@
 	2017-10-08  v0.06  tubelib.get_node_number() added, tubelib.version added
 	2017-10-29  v0.07  Pusher bugfix, commands start/stop replaced by on/off
 	2017-11-02  v0.08  Data base changed, aging of node positions added
+	2017-11-04  v0.09  functions set_data/get_data added
 	
 ]]--
 

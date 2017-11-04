@@ -135,6 +135,26 @@ function tubelib.get_node_number(pos)
 	return nil
 end	
 
+-- Store any node number related, additional data
+-- param number: node number, returned by tubelib.add_node
+-- param name: name of the data (string)
+-- param data: any data (number, string, table)
+function tubelib.set_data(number, name, data)
+	if Number2Pos[number] and type(name) == "string" then
+		Number2Pos[number]["u_"..name] = data
+	end
+end
+
+-- Read node number related data
+-- param number: node number, returned by tubelib.add_node
+-- param name: name of the data (string)
+function tubelib.get_data(number, name)
+	if Number2Pos[number] and type(name) == "string" then
+		return Number2Pos[number]["u_"..name]
+	end
+	return nil
+end
+
 -------------------------------------------------------------------
 -- Node construction/destruction functions
 -------------------------------------------------------------------
@@ -203,8 +223,10 @@ function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload
 			local data = Number2Pos[num]
 			if placer_name and not minetest_is_protected(data.pos, placer_name) then
 				if clicker_name == nil or not minetest_is_protected(data.pos, clicker_name) then
-					if data and data.name and tubelib_NodeDef[data.name].on_recv_message then
-						tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
+					if data and data.name then
+						if tubelib_NodeDef[data.name] and tubelib_NodeDef[data.name].on_recv_message then
+							tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
+						end
 					end
 				end
 			end
@@ -217,8 +239,10 @@ function tubelib.send_request(number, placer_name, clicker_name, topic, payload)
 		local data = Number2Pos[number]
 		if placer_name and not minetest_is_protected(data.pos, placer_name) then
 			if clicker_name == nil or not minetest_is_protected(data.pos, clicker_name) then
-				if data and data.name and tubelib_NodeDef[data.name].on_recv_message then
-					return tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
+				if data and data.name then
+					if tubelib_NodeDef[data.name] and tubelib_NodeDef[data.name].on_recv_message then
+						return tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
+					end
 				end
 			end
 		end
