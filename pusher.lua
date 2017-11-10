@@ -216,9 +216,9 @@ tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
 	
 	on_recv_message = function(pos, topic, payload)
 		local node = minetest.get_node(pos)
-		if topic == "start" then
+		if topic == "on" then
 			return switch_on(pos, node)
-		elseif topic == "stop" then
+		elseif topic == "off" then
 			return switch_off(pos, node)
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
