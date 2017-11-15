@@ -141,7 +141,7 @@ minetest.register_node("tubelib:button_active", {
 	on_rightclick = function(pos, node, clicker)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("clicker_name", clicker:get_player_name())
-		if meta:get_int("cycle_time") == nil then
+		if meta:get_int("cycle_time") == nil or meta:get_int("cycle_time") == 0 then
 			switch_off(pos, node)
 		end
 	end,
