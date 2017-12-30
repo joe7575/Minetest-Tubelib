@@ -51,7 +51,6 @@ local Name2Name = {}		-- translation table
 -- Localize functions to avoid table lookups (better performance).
 local string_find = string.find
 local string_split = string.split
-local minetest_is_protected = minetest.is_protected
 local tubelib_NodeDef = tubelib.NodeDef
 local get_neighbor_pos = tubelib.get_neighbor_pos
 local read_node_with_vm = tubelib.read_node_with_vm
@@ -221,8 +220,8 @@ function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload
 	for _,num in ipairs(string_split(numbers, " ")) do
 		if Number2Pos[num] and Number2Pos[num].name then
 			local data = Number2Pos[num]
-			if placer_name and not minetest_is_protected(data.pos, placer_name) then
-				if clicker_name == nil or not minetest_is_protected(data.pos, clicker_name) then
+			if placer_name and not minetest.is_protected(data.pos, placer_name) then
+				if clicker_name == nil or not minetest.is_protected(data.pos, clicker_name) then
 					if data and data.name then
 						if tubelib_NodeDef[data.name] and tubelib_NodeDef[data.name].on_recv_message then
 							tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
@@ -237,8 +236,8 @@ end
 function tubelib.send_request(number, placer_name, clicker_name, topic, payload)
 	if Number2Pos[number] and Number2Pos[number].name then
 		local data = Number2Pos[number]
-		if placer_name and not minetest_is_protected(data.pos, placer_name) then
-			if clicker_name == nil or not minetest_is_protected(data.pos, clicker_name) then
+		if placer_name and not minetest.is_protected(data.pos, placer_name) then
+			if clicker_name == nil or not minetest.is_protected(data.pos, clicker_name) then
 				if data and data.name then
 					if tubelib_NodeDef[data.name] and tubelib_NodeDef[data.name].on_recv_message then
 						return tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
