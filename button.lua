@@ -11,8 +11,6 @@
 	button.lua:
 	
 	Example of a simple communication node, only sending messages to other nodes.
-	This node does not claim a position number via "add_node()", 
-	nore providing any server API.
 
 ]]--
 
@@ -26,7 +24,8 @@ local function switch_on(pos, node)
 			max_hear_distance = 5,
 		})
 	local meta = minetest.get_meta(pos)
-	local number = meta:get_string("number")
+	local own_num = meta:get_string("own_num")
+	local numbers = meta:get_string("numbers")
 	local cycle_time = meta:get_int("cycle_time")
 	if cycle_time > 0 then 	-- button mode?
 		minetest.get_node_timer(pos):start(cycle_time)
@@ -36,7 +35,7 @@ local function switch_on(pos, node)
 	if meta:get_string("public") == "false" then
 		clicker_name = meta:get_string("clicker_name")
 	end
-	tubelib.send_message(number, placer_name, clicker_name, "on", nil)  -- <<=== tubelib
+	tubelib.send_message(numbers, placer_name, clicker_name, "on", own_num)  -- <<=== tubelib
 end
 
 local function switch_off(pos)
@@ -50,9 +49,10 @@ local function switch_off(pos)
 			max_hear_distance = 5,
 		})
 	local meta = minetest.get_meta(pos)
-	local number = meta:get_string("number")
+	local own_num = meta:get_string("own_num")
+	local numbers = meta:get_string("numbers")
 	local placer_name = meta:get_string("placer_name")
-	tubelib.send_message(number, placer_name, nil, "off", nil)  -- <<=== tubelib
+	tubelib.send_message(numbers, placer_name, nil, "off", own_num)  -- <<=== tubelib
 end
 
 
@@ -70,21 +70,25 @@ minetest.register_node("tubelib:button", {
 
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos)
+		local own_num = tubelib.add_node(pos, "tubelib:button")
+		meta:set_string("own_num", own_num)
 		meta:set_string("formspec", "size[5,6]"..
 		"dropdown[0.2,0;3;type;switch,button 2s,button 4s,button 8s,button 16s;1]".. 
-		"field[0.5,2;3,1;number;Insert destination block number;]" ..
+		"field[0.5,2;3,1;numbers;Insert destination block number(s);]" ..
 		"checkbox[1,3;public;public;false]"..
 		"button_exit[1,4;2,1;exit;Save]")
 		meta:set_string("placer_name", placer:get_player_name())
 		meta:set_string("public", "false")
 		meta:set_int("cycle_time", 0)
+		meta:set_string("infotext", "Tubelib Button "..own_num)
 	end,
 
 	on_receive_fields = function(pos, formname, fields, player)
 		local meta = minetest.get_meta(pos)
-		if tubelib.check_numbers(fields.number) then  -- <<=== tubelib
-			meta:set_string("number", fields.number)
-			meta:set_string("infotext", "Tubelib Button, connected with block "..fields.number)
+		if tubelib.check_numbers(fields.numbers) then  -- <<=== tubelib
+			meta:set_string("numbers", fields.numbers)
+			local own_num = meta:get_string("own_num")
+			meta:set_string("infotext", "Tubelib Button "..own_num..", connected with block "..fields.numbers)
 		else
 			return
 		end
@@ -157,11 +161,11 @@ minetest.register_node("tubelib:button_active", {
 })
 
 minetest.register_craft({
-	output = "tubelib:button 4",
+	output = "tubelib:button",
 	recipe = {
-		{"group:wood", 		"group:wood",  			"group:wood"},
-		{"dye:red", 		"default:mese_crystal",	"tubelib:tube1"},
-		{"group:wood", 		"default:glass",  		"group:wood"},
+		{"",              "group:wood",  	    ""},
+		{"default:glass", "tubelib:wlanchip",	""},
+		{"",              "group:wood",  	    ""},
 	},
 })
 

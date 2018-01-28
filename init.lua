@@ -18,6 +18,8 @@
 	2017-10-29  v0.07  Pusher bugfix, commands start/stop replaced by on/off
 	2017-11-02  v0.08  Data base changed, aging of node positions added
 	2017-11-04  v0.09  functions set_data/get_data added
+	2018-01-27  v0.10  WLAN Chip added, recipes reviced, Pusher state 'blocked' added, 
+                     function send_request changed
 	
 ]]--
 
@@ -26,7 +28,7 @@ tubelib = {
 	NodeDef = {},		-- node registration info
 }
 
-tubelib.version = 0.08
+tubelib.version = 0.10
 
 
 --------------------------- conversion to v0.04
@@ -48,6 +50,23 @@ minetest.register_lbm({
 		inv:set_size('blue', 6)
 	end
 })
+
+
+minetest.register_craftitem("tubelib:wlanchip", {
+	description = "Tubelib WLAN Chip",
+	inventory_image = "tubelib_wlanchip.png",
+})
+
+
+minetest.register_craft({
+	output = "tubelib:wlanchip 8",
+	recipe = {
+		{"default:mese_crystal", "default:copper_ingot", ""},
+		{"default:gold_ingot",   "default:glass",	""},
+		{"", "", ""},
+	},
+})
+
 
 dofile(minetest.get_modpath("tubelib") .. "/tubes.lua")
 dofile(minetest.get_modpath("tubelib") .. "/command.lua")

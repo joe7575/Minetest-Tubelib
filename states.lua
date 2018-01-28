@@ -14,6 +14,10 @@
 
 ]]--
 
+--
+-- Inventory Button States
+--
+
 tubelib.STOPPED = 1		-- not operational
 tubelib.RUNNING = 2		-- in normal operation
 tubelib.STANDBY = 3		-- nothing to do or blocked anyhow
@@ -34,6 +38,17 @@ function tubelib.state_button(state)
 	return tubelib.StatesImg[tubelib.FAULT]
 end
 			
+
+--
+-- 'running' variable States
+--
+
+tubelib.STATE_RUNNING = 1		-- in normal operation
+tubelib.STATE_STOPPED = 0		-- not operational
+tubelib.STATE_STANDBY = -1		-- nothing to do
+tubelib.STATE_BLOCKED = -2		-- pushing node is blocked due to a full inventory
+tubelib.STATE_FAULT   = -3		-- any fault state, which has to be fixed by the player
+
 -- Return machine state based on the running counter
 function tubelib.state(running)
 	if running > 0 then
@@ -42,6 +57,8 @@ function tubelib.state(running)
 		return tubelib.STOPPED
 	elseif running == -1 then
 		return tubelib.STANDBY
+	elseif running == -2 then
+		return tubelib.BLOCKED
 	else
 		return tubelib.FAULT
 	end
@@ -55,6 +72,8 @@ function tubelib.statestring(running)
 		return "stopped"
 	elseif running == -1 then
 		return "standby"
+	elseif running == -2 then
+		return "blocked"
 	else
 		return "fault"
 	end

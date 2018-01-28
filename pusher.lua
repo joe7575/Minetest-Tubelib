@@ -17,7 +17,7 @@
 	 - topic = "on", payload  = nil
 	 - topic = "off", payload  = nil
 	 - topic = "state", payload  = nil, 
-	   response is "running", "stopped", "standby", or "not supported"
+	   response is "running", "stopped", "standby", "blocked", or "not supported"
 
 ]]--
 
@@ -45,7 +45,7 @@ end
 local function switch_off(pos, node)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", 0)
+	meta:set_int("running", tubelib.STATE_STOPPED)
 	meta:set_string("infotext", "Pusher "..number..": stopped")
 	node.name = "tubelib:pusher"
 	minetest.swap_node(pos, node)
@@ -53,11 +53,22 @@ local function switch_off(pos, node)
 	return false
 end	
 
-local function goto_sleep(pos, node)
+local function goto_standby(pos, node)
 	local meta = minetest.get_meta(pos)
 	local number = meta:get_string("number")
-	meta:set_int("running", 0)
+	meta:set_int("running", tubelib.STATE_STANDBY)
 	meta:set_string("infotext", "Pusher "..number..": standby")
+	node.name = "tubelib:pusher"
+	minetest.swap_node(pos, node)
+	minetest.get_node_timer(pos):start(20)
+	return false
+end	
+
+local function goto_blocked(pos, node)
+	local meta = minetest.get_meta(pos)
+	local number = meta:get_string("number")
+	meta:set_int("running", tubelib.STATE_BLOCKED)
+	meta:set_string("infotext", "Pusher "..number..": blocked")
 	node.name = "tubelib:pusher"
 	minetest.swap_node(pos, node)
 	minetest.get_node_timer(pos):start(20)
@@ -75,7 +86,7 @@ local function keep_running(pos, elapsed)
 			-- place item back
 			tubelib.unpull_items(pos, "L", items, player_name) -- <<=== tubelib
 			local node = minetest.get_node(pos)
-			return goto_sleep(pos, node)
+			return goto_blocked(pos, node)
 		end
 		if running <= 0 then
 			local node = minetest.get_node(pos)
@@ -87,7 +98,7 @@ local function keep_running(pos, elapsed)
 	else
 		if running <= 0 then
 			local node = minetest.get_node(pos)
-			return goto_sleep(pos, node)
+			return goto_standby(pos, node)
 		end
 	end
 	meta:set_int("running", running)
@@ -223,7 +234,7 @@ tubelib.register_node("tubelib:pusher", {"tubelib:pusher_active"}, {
 		elseif topic == "state" then
 			local meta = minetest.get_meta(pos)
 			local running = meta:get_int("running")
-			return tubelib.statestring(runnnig)
+			return tubelib.statestring(running)
 		else
 			return "not supported"
 		end

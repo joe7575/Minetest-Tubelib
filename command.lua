@@ -233,22 +233,17 @@ function tubelib.send_message(numbers, placer_name, clicker_name, topic, payload
 	end
 end		
 
-function tubelib.send_request(number, placer_name, clicker_name, topic, payload)
+function tubelib.send_request(number, topic, payload)
 	if Number2Pos[number] and Number2Pos[number].name then
 		local data = Number2Pos[number]
-		if placer_name and not minetest.is_protected(data.pos, placer_name) then
-			if clicker_name == nil or not minetest.is_protected(data.pos, clicker_name) then
-				if data and data.name then
-					if tubelib_NodeDef[data.name] and tubelib_NodeDef[data.name].on_recv_message then
-						return tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
-					end
-				end
+		if data and data.name then
+			if tubelib_NodeDef[data.name] and tubelib_NodeDef[data.name].on_recv_message then
+				return tubelib_NodeDef[data.name].on_recv_message(data.pos, topic, payload)
 			end
 		end
 	end
 	return false
 end		
-
 
 -------------------------------------------------------------------
 -- Client side Push/Pull item functions
@@ -348,8 +343,8 @@ function tubelib.put_item(meta, listname, item)
 	return false
 end
 
--- Get the number of items from the given ItemList.
--- Returns nil if the number is not available.
+-- Take the number of items from the given ItemList.
+-- Returns nil if the requested number is not available.
 function tubelib.get_num_items(meta, listname, num)
 	if meta == nil or meta.get_inventory == nil then return nil end
 	local inv = meta:get_inventory()
@@ -367,6 +362,24 @@ function tubelib.get_num_items(meta, listname, num)
 	end
 	return nil
 end
+
+-- Return "full", "loaded", or "empty" depending
+-- on the number of fuel stack items.
+-- Function only works on fuel inventories with one stacks/99 items
+function tubelib.fuelstate(meta, listname, item)
+	if meta == nil or meta.get_inventory == nil then return nil end
+	local inv = meta:get_inventory()
+	if inv:is_empty(listname) then
+		return "empty"
+	end
+	local list = inv:get_list(listname)
+	if #list == 1 and list[1]:get_count() == 99 then
+		return "full"
+	else
+		return "loaded"
+	end
+end
+	
 
 
 -------------------------------------------------------------------------------

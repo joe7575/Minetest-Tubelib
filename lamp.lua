@@ -83,9 +83,9 @@ minetest.register_node("tubelib:lamp_on", {
 minetest.register_craft({
 	output = "tubelib:lamp 4",
 	recipe = {
-		{"wool:white",    "wool:white",         "wool:white"},
-		{"tubelib:tube1", "default:coal_lump",  ""},
-		{"group:wood",    "",                   "group:wood"},
+		{"wool:white",       "wool:white",        "wool:white"},
+		{"tubelib:wlanchip", "default:coal_lump", ""},
+		{"group:wood",       "",                  "group:wood"},
 	},
 })
 
