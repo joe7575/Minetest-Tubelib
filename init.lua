@@ -51,6 +51,21 @@ minetest.register_lbm({
 	end
 })
 
+--------------------------- conversion to v0.10
+minetest.register_lbm({
+	label = "[Tubelib] Button update",
+	name = "tubelib:update2",
+	nodenames = {"tubelib:button", "tubelib:button_active"},
+	run_at_every_load = false,
+	action = function(pos, node)
+		local meta = minetest.get_meta(pos)
+		local number = meta:get_string("number")
+		if number ~= "" then
+			meta:set_string("numbers", number)
+			meta:set_string("number", nil)
+		end
+	end
+})
 
 minetest.register_craftitem("tubelib:wlanchip", {
 	description = "Tubelib WLAN Chip",
