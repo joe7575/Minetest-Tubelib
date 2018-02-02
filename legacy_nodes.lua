@@ -76,3 +76,32 @@ tubelib.register_node("default:furnace", {"default:furnace_active"}, {
 		return tubelib.put_item(meta, "dst", item)
 	end,
 })	
+
+tubelib.register_node("shop:shop", {}, {
+	on_pull_item = function(pos, side, player_name)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		if player_name == owner or player_name == "" then
+			return tubelib.get_item(meta, "register")
+		end
+		return nil
+	end,
+	on_push_item = function(pos, side, item, player_name)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		if player_name == owner or player_name == "" then
+			return tubelib.put_item(meta, "stock", item)
+		end
+		return false
+	end,
+	on_unpull_item = function(pos, side, item, player_name)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		if player_name == owner or player_name == "" then
+			return tubelib.put_item(meta, "register", item)
+		end
+		return nil
+	end,
+})	
+
+
