@@ -74,7 +74,7 @@ local function remote_node(pos, npos)
 	-- two possible reasons, why dest_pos == pos:
 	-- 1)  wrong side of a single tube node
 	-- 2)  node connected with itself. In this case "dest_pos2" is not available
-	if vector_equals(dest_pos, pos) then
+	if dest_pos and vector_equals(dest_pos, pos) then
 		local dest_pos2 = minetest.string_to_pos(minetest.get_meta(npos):get_string("dest_pos2"))
 		if dest_pos2 == nil then
 			local facedir = minetest.get_meta(npos):get_int("facedir")
