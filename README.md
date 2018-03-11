@@ -1,3 +1,7 @@
+:boom: This Mod is now part of the Modpack ![TechPack](https://github.com/joe7575/techpack).
+This repository here is no longer maintained. :boom:
+
+```
 # Tube Library
 
 Minetest Tube Mod for item exchange via lumber tubes and wireless message communication between nodes.
@@ -31,4 +35,4 @@ default
 Copyright (C) 2017 Joachim Stolberg  
 Code: Licensed under the GNU LGPL version 2.1 or later. See LICENSE.txt and http://www.gnu.org/licenses/lgpl-2.1.txt  
 Textures: CC0
-
+```
