@@ -1,7 +1,3 @@
-:boom: This Mod is now part of the Modpack ![TechPack](https://github.com/joe7575/techpack).
-This repository here is no longer maintained. :boom:
-
-```
 # Tube Library
 
 Minetest Tube Mod for item exchange via lumber tubes and wireless message communication between nodes.
@@ -23,6 +19,9 @@ The mod provides:
 Hints for Admins: ![manual.md](https://github.com/joe7575/Minetest-Tubelib/blob/master/manual.md)  
 Programmers Manual: ![api.md](https://github.com/joe7575/Minetest-Tubelib/blob/master/api.md)
 
+This mod is part of the ModPack ![TechPack](https://github.com/joe7575/techpack)
+A Tutorial to this Mod is available as ![TechPack Wiki](https://github.com/joe7575/techpack/wiki)
+
 Browse on: ![GitHub](https://github.com/joe7575/Minetest-Tubelib)
 
 Download: ![GitHub](https://github.com/joe7575/Minetest-Tubelib/archive/master.zip)
@@ -32,7 +31,10 @@ Download: ![GitHub](https://github.com/joe7575/Minetest-Tubelib/archive/master.z
 default  
 
 # License
-Copyright (C) 2017 Joachim Stolberg  
+Copyright (C) 2017-2018 Joachim Stolberg  
 Code: Licensed under the GNU LGPL version 2.1 or later. See LICENSE.txt and http://www.gnu.org/licenses/lgpl-2.1.txt  
 Textures: CC0
-```
+
+## Dependencies
+default  
+
