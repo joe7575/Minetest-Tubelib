@@ -231,8 +231,10 @@ local function update_next_tube(dir, pos)
 	if (conn1 and conn2) or (not dir1 and not dir2) then
 		return
 	elseif not conn1 and not conn2 then
-		dir1 = Turn90Deg[dir1] 
-		dir2 = Turn180Deg[dir1]
+		if dir1 ~= dir and dir2 ~= dir then
+			dir1 = Turn90Deg[dir1] 
+			dir2 = Turn180Deg[dir1]
+		end
 	elseif conn1 then 
 		dir2 = Turn180Deg[dir]
 	else
@@ -243,24 +245,28 @@ local function update_next_tube(dir, pos)
 end	
 	
 -- update new placed tube
-local function update_tube(pos, dir)
+local function update_tube(pos, dir, force_dir)
 	local dir1 = nil
 	local dir2 = nil
+	-- use the predefined direction?
+	if force_dir then
+		dir1 = force_dir
+	end
 	-- search on all 6 pos for up to 2 tubes with open holes or 
 	-- other tubelib compatible nodes
-	for dir = 1,6 do
-		if not dir1 and is_connected(pos, dir) then
-			dir1 = dir
-		elseif not dir2 and is_connected(pos, dir) then
-			dir2 = dir
+	for ndir = 1,6 do
+		if not dir1 and is_connected(pos, ndir) then
+			dir1 = ndir
+		elseif not dir2 and is_connected(pos, ndir) and ndir ~= dir1 then
+			dir2 = ndir
 		end
 	end
-	if not dir1 or not dir2 then
-		for dir = 1,6 do
-			if not dir1 and is_known_node(pos, dir) then 
-				dir1 = dir
-			elseif not dir2 and is_known_node(pos, dir) then 
-				dir2 = dir
+	if not force_dir and (not dir1 or not dir2) then
+		for ndir = 1,6 do
+			if not dir1 and is_known_node(pos, ndir) then 
+				dir1 = ndir
+			elseif not dir2 and is_known_node(pos, ndir) and ndir ~= dir1  then 
+				dir2 = ndir
 			end
 		end
 	end
@@ -270,7 +276,7 @@ local function update_tube(pos, dir)
 	swap_node(pos, node_num, param2)
 end
 
-function tubelib.update_tubes(pos, dir, straight_ahead)
+function tubelib.update_tubes(pos, dir, force_dir, straight_ahead)
 	-- Update all tubes arround the currently placed tube
 	update_next_tube(1, {x=pos.x  , y=pos.y  , z=pos.z+1})
 	update_next_tube(2, {x=pos.x+1, y=pos.y  , z=pos.z  })
@@ -280,7 +286,7 @@ function tubelib.update_tubes(pos, dir, straight_ahead)
 	update_next_tube(6, {x=pos.x  , y=pos.y+1, z=pos.z  })
 	if not straight_ahead then
 		-- Update the placed tube
-		update_tube(pos, dir)
+		update_tube(pos, dir, force_dir)
 	end
 	return tubelib.delete_meta_data(pos, minetest.get_node(pos)) < MAX_TUBE_LENGTH
 end		
